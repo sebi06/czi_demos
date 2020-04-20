@@ -50,17 +50,7 @@ verbose = False
 
 ###############################################################################
 
-
-filenames = [r'/datadisk1/tuxedo/testpictures/Testdata_Zeiss/wellplate/B4_B5_S=8_4Pos_perWell_T=2_Z=1_CH=1.czi',
-             r'/datadisk1/tuxedo/testpictures/Testdata_Zeiss/wellplate/96well-SingleFile-Scene-05-A5-A5.czi',
-             r'/datadisk1/tuxedo/testpictures/Testdata_Zeiss/wellplate/testwell96.czi',
-             r'C:\Users\m1srh\Documents\Testdata_Zeiss\Castor\testwell96.czi',
-             r'C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Castor\testwell96 - A1_1024x1024_0.czi',
-             r'segment_nuclei_CNN.czi',
-             r"E:\tuxedo\testpictures\Testdata_Zeiss\wellplate\testwell96.czi",
-             r'/datadisk1/tuxedo/testpictures/Testdata_Zeiss/wellplate/testwell96.czi']
-
-filename = filenames[7]
+filename = r'/datadisk1/tuxedo/testpictures/Testdata_Zeiss/wellplate/testwell96.czi'
 
 # readmethod: fullstack, chunked, chunked_dask, perscene
 readmethod = 'perscene'

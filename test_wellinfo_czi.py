@@ -1,21 +1,18 @@
 # -*- coding: utf-8 -*-
-"""
-@author: Sebi
 
-File: test_wellinfo_czi.py
-Date: 19.12.2019
-Version. 0.1
-"""
+#################################################################
+# File        : test_wellinfo_czi.py
+# Version     : 0.1
+# Author      : czsrh
+# Date        : 20.04.2020
+# Institution : Carl Zeiss Microscopy GmbH
+#
+# Copyright (c) 2020 Carl Zeiss AG, Germany. All Rights Reserved.
+#################################################################
 
 import imgfileutils as imf
 
-filenames = [r'/datadisk1/tuxedo/testpictures/Testdata_Zeiss/wellplate//B4_B5_S=8_4Pos_perWell_T=2_Z=1_CH=1.czi',
-             r'/datadisk1/tuxedo/testpictures/Testdata_Zeiss/wellplate//96well-SingleFile-Scene-05-A5-A5.czi',
-             r'/datadisk1/tuxedo/testpictures/Testdata_Zeiss/wellplate//testwell96.czi',
-             r'/datadisk1/tuxedo/testpictures/Testdata_Zeiss/wellplate/96Well_CH=1_1P.czi']
-
-filename = filenames[3]
-
+filename = r'/datadisk1/tuxedo/testpictures/Testdata_Zeiss/wellplate//testwell96.czi'
 
 # get the metadata from the czi file
 md = imf.get_metadata_czi(filename, dim2none=False)
