@@ -1,3 +1,15 @@
+# -*- coding: utf-8 -*-
+
+#################################################################
+# File        : test_write_ometiff.py
+# Version     : 0.1
+# Author      : czsrh
+# Date        : 20.04.2020
+# Institution : Carl Zeiss Microscopy GmbH
+#
+# Copyright (c) 2020 Carl Zeiss AG, Germany. All Rights Reserved.
+#################################################################
+
 import imgfileutils as imf
 import os
 import numpy as np
