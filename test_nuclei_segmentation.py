@@ -288,6 +288,7 @@ for s in range(SizeS):
                           'min_intensity',
                           'bbox')
 
+            # measure the specified parameters store in dataframe
             props = pd.DataFrame(
                 measure.regionprops_table(
                     mask,
@@ -296,11 +297,11 @@ for s in range(SizeS):
                 )
             ).set_index('label')
 
-            # filter by size
+            # filter objects by size
             props = props[(props['area'] >= minsize) & (props['area'] <= maxsize)]
             # props = [r for r in props if r.area >= minsize]
 
-            # add wellinformation for CZI metadata
+            # add well information for CZI metadata
             props['WellId'] = md['Well_ArrayNames'][s]
             props['Well_ColId'] = md['Well_ColId'][s]
             props['Well_RowId'] = md['Well_RowId'][s]
@@ -329,7 +330,7 @@ for s in range(SizeS):
 
 
 if readmethod == 'perscene':
-    print('Runtime total CZI Reading using method: ', readmethod, readtime_allscenes)
+    print('Total time CZI Reading using method: ', readmethod, readtime_allscenes)
 
 # reorder dataframe with single objects
 new_order = list(results.columns[-7:]) + list(results.columns[:-7])
@@ -342,8 +343,6 @@ img.close()
 endp = perf_counter()
 print('End Time: ', endp)
 print('Runtime Segmentation Pipeline : ' + str(endp - startp))
-
-print('Done')
 
 # optional display of a heatmap
 if show_heatmap:
@@ -391,3 +390,5 @@ if show_heatmap:
     # print(results[:5])
 
     plt.show()
+
+print('Done')
