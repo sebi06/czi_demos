@@ -31,6 +31,7 @@ import re
 from aicsimageio import AICSImage, imread, imread_dask
 import dask.array as da
 import napari
+import pandas as pd
 
 
 def get_imgtype(imagefile):
@@ -624,6 +625,28 @@ def get_additional_metadata_czi(filename):
     czi.close()
 
     return additional_czimd
+
+
+def md2dataframe(metadata, paramcol='Parameter', keycol='Value'):
+    """Convert the metadata dictionary to a Pandas DataFrame.
+
+    :param metadata: MeteData dictionary
+    :type metadata: dict
+    :param paramcol: Name of Columns for the MetaData Parameters, defaults to 'Parameter'
+    :type paramcol: str, optional
+    :param keycol: Name of Columns for the MetaData Values, defaults to 'Value'
+    :type keycol: str, optional
+    :return: Pandas DataFrame containing all the metadata
+    :rtype: Pandas.DataFrame
+    """
+    mdframe = pd.DataFrame(columns=[paramcol, keycol])
+
+    for k in metadata.keys():
+        d = {'Parameter': k, 'Value': metadata[k]}
+        df = pd.DataFrame([d], index=[0])
+        mdframe = pd.concat([mdframe, df], ignore_index=True)
+
+    return mdframe
 
 
 def create_ipyviewer_ome_tiff(array, metadata):

@@ -11,11 +11,15 @@
 #################################################################
 
 import imgfileutils as imf
+import pandas as pd
 
 filename = r'/datadisk1/tuxedo/testpictures/Testdata_Zeiss/wellplate//testwell96.czi'
 
 # get the metadata from the czi file
 md = imf.get_metadata_czi(filename, dim2none=False)
+
+# convert metadata dictionary to a pandas dataframe
+mdframe = imf.md2dataframe(md)
 
 # shape and dimension entry from CZI file as returned by czifile.py
 print('CZI Array Shape : ', md['Shape'])
@@ -37,3 +41,5 @@ print('Well Row Indices    : ', md['Well_RowId'])
 print('WellCounter         : ', md['WellCounter'])
 print('Different Wells     : ', md['NumWells'])
 print('ImageSeries Ind. Well ', well2check, ' : ', isids)
+
+print(mdframe[:10])
