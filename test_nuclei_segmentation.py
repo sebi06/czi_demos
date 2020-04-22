@@ -13,35 +13,14 @@
 import sys
 from time import process_time, perf_counter
 import os
-from glob import glob
-import logging
 import numpy as np
 import pandas as pd
-import seaborn as sns
 import matplotlib.pyplot as plt
-import matplotlib.colors as colors
-import matplotlib.patches as mpatches
 import imgfileutils as imf
 import segmentation_tools as sgt
-from scipy import ndimage
 from aicsimageio import AICSImage, imread
-from skimage import exposure
-from skimage.morphology import watershed, dilation
-from skimage.feature import peak_local_max
-from skimage.measure import label
-from scipy.ndimage import distance_transform_edt
-from skimage.segmentation import random_walker
-from skimage import io, measure, segmentation
-from skimage.filters import threshold_otsu, threshold_triangle, rank
-from skimage.segmentation import clear_border
-from skimage.color import label2rgb
-from skimage.exposure import rescale_intensity
-from skimage.util import invert
-from skimage.filters import median, gaussian
-from skimage.morphology import closing, square
-from skimage.morphology import remove_small_objects, remove_small_holes
-from skimage.morphology import disk, square, ball
-from skimage.measure import label, regionprops
+from skimage import measure
+from skimage.measure import regionprops
 from MightyMosaic import MightyMosaic
 
 # select plotting backend
@@ -50,7 +29,8 @@ verbose = False
 
 ###############################################################################
 
-filename = r'/datadisk1/tuxedo/testpictures/Testdata_Zeiss/wellplate/testwell96.czi'
+# filename = r'/datadisk1/tuxedo/testpictures/Testdata_Zeiss/wellplate/testwell96.czi'
+filename = r'WP384_4Pos_B4-10_DAPI.czi'
 
 # readmethod: fullstack, chunked, chunked_dask, perscene
 readmethod = 'perscene'
@@ -58,17 +38,11 @@ readmethod = 'perscene'
 # define platetype and get number of rows and columns
 show_heatmap = True
 if show_heatmap:
-    platetype = 96
+    platetype = 384
     nr, nc = sgt.getrowandcolumn(platetype=platetype)
 
-# get AICSImageIO object using the python wrapper for libCZI
-img = AICSImage(filename)
-SizeS = img.size_s
-SizeT = img.size_t
-SizeZ = img.size_z
-
 chindex = 0  # channel containing the objects, e.g. the nuclei
-minsize = 200  # minimum object size [pixel]
+minsize = 20  # minimum object size [pixel]
 maxsize = 5000  # maximum object size [pixel]
 
 # define cutout size for subimage
@@ -131,7 +105,6 @@ if use_method == 'zentf':
 
 # start the timer for the total pipeline
 startp = perf_counter()
-print('Starting Time: ', startp)
 readtime_allscenes = 0
 
 image_counter = 0
@@ -140,6 +113,12 @@ results = pd.DataFrame()
 # get the CZI metadata
 # get the metadata from the czi file
 md = imf.get_metadata_czi(filename, dim2none=False)
+
+# get AICSImageIO object using the python wrapper for libCZI
+img = AICSImage(filename)
+# SizeS = img.size_s
+# SizeT = img.size_t
+# SizeZ = img.size_z
 
 if readmethod == 'chunked':
     # start the timer
@@ -165,9 +144,9 @@ if readmethod == 'fullstack':
     end = process_time()
     print('Runtime CZI Reading using method: ', readmethod, str(end - start))
 
-for s in range(SizeS):
-    for t in range(SizeT):
-        for z in range(SizeZ):
+for s in range(md['SizeS']):
+    for t in range(md['SizeT']):
+        for z in range(md['SizeZ']):
 
             values = {'S': s,
                       'T': t,
@@ -331,7 +310,6 @@ img.close()
 
 # get the end time for the total pipeline
 endp = perf_counter()
-print('End Time: ', endp)
 print('Runtime Segmentation Pipeline : ' + str(endp - startp))
 
 # optional display of a heatmap
