@@ -13,7 +13,8 @@
 import imgfileutils as imf
 import pandas as pd
 
-filename = r'/datadisk1/tuxedo/testpictures/Testdata_Zeiss/wellplate//testwell96.czi'
+#filename = r'/datadisk1/tuxedo/testpictures/Testdata_Zeiss/wellplate//testwell96.czi'
+filename = r'WP384_4Pos_B4-10_DAPI.czi'
 
 # get the metadata from the czi file
 md = imf.get_metadata_czi(filename, dim2none=False)

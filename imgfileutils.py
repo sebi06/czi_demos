@@ -521,12 +521,12 @@ def get_metadata_czi(filename, dim2none=False):
 
             # get the well information
             try:
-                metadata['Well_Indices'].append(well['@Index'])
+                metadata['Well_Indices'].append(well['Index'])
             except KeyError as e:
                 #print('Key not found in Metadata Dictionary:', e)
                 metadata['Well_Indices'].append(None)
             try:
-                metadata['Well_PositionNames'].append(well['@Name'])
+                metadata['Well_PositionNames'].append(well['Name'])
             except KeyError as e:
                 #print('Key not found in Metadata Dictionary:', e)
                 metadata['Well_PositionNames'].append(None)
