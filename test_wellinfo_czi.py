@@ -43,4 +43,4 @@ print('WellCounter         : ', md['WellCounter'])
 print('Different Wells     : ', md['NumWells'])
 print('ImageSeries Ind. Well ', well2check, ' : ', isids)
 
-print(mdframe[:10])
+# print(mdframe[:10])

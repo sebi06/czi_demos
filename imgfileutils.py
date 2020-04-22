@@ -2,7 +2,7 @@
 
 #################################################################
 # File        : imgfileutils.py
-# Version     : 0.1
+# Version     : 0.3
 # Author      : czsrh
 # Date        : 20.04.2020
 # Institution : Carl Zeiss Microscopy GmbH
@@ -11,7 +11,7 @@
 #################################################################
 
 # this can be used to switch on/off warnings
-#import warnings
+# import warnings
 # warnings.filterwarnings('ignore')
 # warnings.simplefilter('ignore')
 
@@ -281,8 +281,8 @@ def get_metadata_czi(filename, dim2none=False):
     metadatadict_czi = czi.metadata(raw=False)
 
     # parse the XML into a dictionary
-    #mdczi = czi.metadata()
-    #metadatadict_czi = xmltodict.parse(czi.metadata())
+    # mdczi = czi.metadata()
+    # metadatadict_czi = xmltodict.parse(czi.metadata())
     metadata = create_metadata_dict()
 
     # get directory and filename etc.
@@ -313,184 +313,208 @@ def get_metadata_czi(filename, dim2none=False):
     if czi.axes[-1] == 3:
         metadata['isRGB'] = True
 
-    metadata['Information'] = metadatadict_czi['ImageDocument']['Metadata']['Information']
     try:
-        metadata['PixelType'] = metadata['Information']['Image']['PixelType']
+        metadata['PixelType'] = metadatadict_czi['ImageDocument']['Metadata']['Information']['Image']['PixelType']
     except KeyError as e:
         print('Key not found:', e)
         metadata['PixelType'] = None
 
-    metadata['SizeX'] = np.int(metadata['Information']['Image']['SizeX'])
-    metadata['SizeY'] = np.int(metadata['Information']['Image']['SizeY'])
+    metadata['SizeX'] = np.int(metadatadict_czi['ImageDocument']['Metadata']['Information']['Image']['SizeX'])
+    metadata['SizeY'] = np.int(metadatadict_czi['ImageDocument']['Metadata']['Information']['Image']['SizeY'])
 
     try:
-        metadata['SizeZ'] = np.int(metadata['Information']['Image']['SizeZ'])
-    except:
+        metadata['SizeZ'] = np.int(metadatadict_czi['ImageDocument']['Metadata']['Information']['Image']['SizeZ'])
+    except Exception as e:
+        #print('Exception:', e)
         if dim2none:
             metadata['SizeZ'] = None
         if not dim2none:
             metadata['SizeZ'] = 1
 
     try:
-        metadata['SizeC'] = np.int(metadata['Information']['Image']['SizeC'])
-    except:
+        metadata['SizeC'] = np.int(metadatadict_czi['ImageDocument']['Metadata']['Information']['Image']['SizeC'])
+    except Exception as e:
+        #print('Exception:', e)
         if dim2none:
             metadata['SizeC'] = None
         if not dim2none:
             metadata['SizeC'] = 1
 
     channels = []
-    for ch in range(metadata['SizeC']):
+    if metadata['SizeC'] == 1:
         try:
             channels.append(metadatadict_czi['ImageDocument']['Metadata']['DisplaySetting']
-                                            ['Channels']['Channel'][ch]['ShortName'])
-        except:
+                                            ['Channels']['Channel']['ShortName'])
+        except Exception as e:
+            channels.append(None)
+
+    if metadata['SizeC'] > 1:
+        for ch in range(metadata['SizeC']):
             try:
                 channels.append(metadatadict_czi['ImageDocument']['Metadata']['DisplaySetting']
-                                                ['Channels']['Channel']['ShortName'])
-            except:
-                channels.append(str(ch))
+                                                ['Channels']['Channel'][ch]['ShortName'])
+            except Exception as e:
+                print('Exception:', e)
+                try:
+                    channels.append(metadatadict_czi['ImageDocument']['Metadata']['DisplaySetting']
+                                                    ['Channels']['Channel']['ShortName'])
+                except Exception as e:
+                    print('Exception:', e)
+                    channels.append(str(ch))
 
     metadata['Channels'] = channels
 
     try:
-        metadata['SizeT'] = np.int(metadata['Information']['Image']['SizeT'])
-    except:
+        metadata['SizeT'] = np.int(metadatadict_czi['ImageDocument']['Metadata']['Information']['Image']['SizeT'])
+    except Exception as e:
+        #print('Exception:', e)
         if dim2none:
             metadata['SizeT'] = None
         if not dim2none:
             metadata['SizeT'] = 1
 
     try:
-        metadata['SizeM'] = np.int(metadata['Information']['Image']['SizeM'])
-    except:
+        metadata['SizeM'] = np.int(metadatadict_czi['ImageDocument']['Metadata']['Information']['Image']['SizeM'])
+    except Exception as e:
+        #print('Exception:', e)
         if dim2none:
             metadatada['SizeM'] = None
         if not dim2none:
             metadata['SizeM'] = 1
 
     try:
-        metadata['SizeB'] = np.int(metadata['Information']['Image']['SizeB'])
-    except:
-
+        metadata['SizeB'] = np.int(metadatadict_czi['ImageDocument']['Metadata']['Information']['Image']['SizeB'])
+    except Exception as e:
+        #print('Exception:', e)
         if dim2none:
             metadatada['SizeB'] = None
         if not dim2none:
             metadata['SizeB'] = 1
 
     try:
-        metadata['SizeS'] = np.int(metadata['Information']['Image']['SizeS'])
-    except:
+        metadata['SizeS'] = np.int(metadatadict_czi['ImageDocument']['Metadata']['Information']['Image']['SizeS'])
+    except Exception as e:
+        print('Exception:', e)
         if dim2none:
             metadatada['SizeS'] = None
         if not dim2none:
             metadata['SizeS'] = 1
 
     try:
-        metadata['Scaling'] = metadatadict_czi['ImageDocument']['Metadata']['Scaling']
-        metadata['XScale'] = float(metadata['Scaling']['Items']['Distance'][0]['Value']) * 1000000
-        metadata['YScale'] = float(metadata['Scaling']['Items']['Distance'][1]['Value']) * 1000000
+        # metadata['Scaling'] = metadatadict_czi['ImageDocument']['Metadata']['Scaling']
+        metadata['XScale'] = float(metadatadict_czi['ImageDocument']['Metadata']['Scaling']['Items']['Distance'][0]['Value']) * 1000000
+        metadata['YScale'] = float(metadatadict_czi['ImageDocument']['Metadata']['Scaling']['Items']['Distance'][1]['Value']) * 1000000
         metadata['XScale'] = np.round(metadata['XScale'], 3)
         metadata['YScale'] = np.round(metadata['YScale'], 3)
         try:
-            metadata['XScaleUnit'] = metadata['Scaling']['Items']['Distance'][0]['DefaultUnitFormat']
-            metadata['YScaleUnit'] = metadata['Scaling']['Items']['Distance'][1]['DefaultUnitFormat']
-        except:
+            metadata['XScaleUnit'] = metadatadict_czi['ImageDocument']['Metadata']['Scaling']['Items']['Distance'][0]['DefaultUnitFormat']
+            metadata['YScaleUnit'] = metadatadict_czi['ImageDocument']['Metadata']['Scaling']['Items']['Distance'][1]['DefaultUnitFormat']
+        except KeyError as e:
+            print('Key not found:', e)
             metadata['XScaleUnit'] = None
             metadata['YScaleUnit'] = None
         try:
-            metadata['ZScale'] = float(metadata['Scaling']['Items']['Distance'][2]['Value']) * 1000000
+            metadata['ZScale'] = float(metadatadict_czi['ImageDocument']['Metadata']['Scaling']['Items']['Distance'][2]['Value']) * 1000000
             metadata['ZScale'] = np.round(metadata['ZScale'], 3)
             try:
-                metadata['ZScaleUnit'] = metadata['Scaling']['Items']['Distance'][2]['DefaultUnitFormat']
-            except:
+                metadata['ZScaleUnit'] = metadatadict_czi['ImageDocument']['Metadata']['Scaling']['Items']['Distance'][2]['DefaultUnitFormat']
+            except KeyError as e:
+                print('Key not found:', e)
                 metadata['ZScaleUnit'] = metadata['XScaleUnit']
-        except:
+        except Exception as e:
+            #print('Exception:', e)
             if dim2none:
-                metadata['ZScale'] = metadata['XScaleUnit']
+                metadata['ZScale'] = None
+                metadata['ZScaleUnit'] = None
             if not dim2none:
                 # set to isotropic scaling if it was single plane only
                 metadata['ZScale'] = metadata['XScale']
-    except:
-        metadata['Scaling'] = None
+                metadata['ZScaleUnit'] = metadata['XScaleUnit']
+    except Exception as e:
+        print('Exception:', e)
+        print('Scaling Data could not be found.')
 
     # try to get software version
     try:
-        metadata['SW-Name'] = metadata['Information']['Application']['Name']
-        metadata['SW-Version'] = metadata['Information']['Application']['Version']
+        metadata['SW-Name'] = metadatadict_czi['ImageDocument']['Metadata']['Information']['Application']['Name']
+        metadata['SW-Version'] = metadatadict_czi['ImageDocument']['Metadata']['Information']['Application']['Version']
     except KeyError as e:
         print('Key not found:', e)
         metadata['SW-Name'] = None
         metadata['SW-Version'] = None
 
     try:
-        metadata['AcqDate'] = metadata['Information']['Image']['AcquisitionDateAndTime']
+        metadata['AcqDate'] = metadatadict_czi['ImageDocument']['Metadata']['Information']['Image']['AcquisitionDateAndTime']
     except KeyError as e:
         print('Key not found:', e)
         metadata['AcqDate'] = None
 
+    # get objective data
     try:
-        metadata['Instrument'] = metadata['Information']['Instrument']
+        metadata['ObjName'] = metadatadict_czi['ImageDocument']['Metadata']['Information']['Instrument']['Objectives']['Objective']['Name']
     except KeyError as e:
         print('Key not found:', e)
-        metadata['Instrument'] = None
+        metadata['ObjName'] = None
 
-    if metadata['Instrument'] is not None:
+    try:
+        metadata['ObjImmersion'] = metadatadict_czi['ImageDocument']['Metadata']['Information']['Instrument']['Objectives']['Objective']['Immersion']
+    except KeyError as e:
+        print('Key not found:', e)
+        metadata['ObjImmersion'] = None
 
-        # get objective data
-        try:
-            metadata['ObjName'] = metadata['Instrument']['Objectives']['Objective']['@Name']
-        except:
-            metadata['ObjName'] = None
+    try:
+        metadata['ObjNA'] = np.float(metadatadict_czi['ImageDocument']['Metadata']['Information']
+                                     ['Instrument']['Objectives']['Objective']['LensNA'])
+    except KeyError as e:
+        print('Key not found:', e)
+        metadata['ObjNA'] = None
 
-        try:
-            metadata['ObjImmersion'] = metadata['Instrument']['Objectives']['Objective']['Immersion']
-        except:
-            metadata['ObjImmersion'] = None
+    try:
+        metadata['ObjID'] = metadatadict_czi['ImageDocument']['Metadata']['Information']['Instrument']['Objectives']['Objective']['Id']
+    except KeyError as e:
+        print('Key not found:', e)
+        metadata['ObjID'] = None
 
-        try:
-            metadata['ObjNA'] = np.float(metadata['Instrument']['Objectives']['Objective']['LensNA'])
-        except:
-            metadata['ObjNA'] = None
+    try:
+        metadata['TubelensMag'] = np.float(metadatadict_czi['ImageDocument']['Metadata']['Information']
+                                           ['Instrument']['TubeLenses']['TubeLens']['Magnification'])
+    except KeyError as e:
+        print('Key not found:', e)
+        metadata['TubelensMag'] = None
 
-        try:
-            metadata['ObjID'] = metadata['Instrument']['Objectives']['Objective']['@Id']
-        except:
-            metadata['ObjID'] = None
+    try:
+        metadata['ObjNominalMag'] = np.float(metadatadict_czi['ImageDocument']['Metadata']['Information']
+                                             ['Instrument']['Objectives']['Objective']['NominalMagnification'])
+    except KeyError as e:
+        metadata['ObjNominalMag'] = None
 
-        try:
-            metadata['TubelensMag'] = np.float(metadata['Instrument']['TubeLenses']['TubeLens']['Magnification'])
-        except:
-            metadata['TubelensMag'] = None
+    try:
+        metadata['ObjMag'] = metadata['ObjNominalMag'] * metadata['TubelensMag']
+    except KeyError as e:
+        print('Key not found:', e)
+        metadata['ObjMag'] = None
 
-        try:
-            metadata['ObjNominalMag'] = np.float(metadata['Instrument']['Objectives']['Objective']['NominalMagnification'])
-        except KeyError as e:
-            metadata['ObjNominalMag'] = None
+    # get detector information
+    try:
+        metadata['DetectorID'] = metadatadict_czi['ImageDocument']['Metadata']['Information']['Instrument']['Detectors']['Detector']['Id']
+    except KeyError as e:
+        print('Key not found:', e)
+        metadata['DetectorID'] = None
 
-        try:
-            metadata['ObjMag'] = metadata['ObjNominalMag'] * metadata['TubelensMag']
-        except:
-            metadata['ObjMag'] = None
+    try:
+        metadata['DetectorModel'] = metadatadict_czi['ImageDocument']['Metadata']['Information']['Instrument']['Detectors']['Detector']['Name']
+    except KeyError as e:
+        print('Key not found:', e)
+        metadata['DetectorModel'] = None
 
-        # get detector information
-        try:
-            metadata['DetectorID'] = metadata['Instrument']['Detectors']['Detector']['@Id']
-        except:
-            metadata['DetectorID'] = None
-
-        try:
-            metadata['DetectorModel'] = metadata['Instrument']['Detectors']['Detector']['@Name']
-        except:
-            metadata['DetectorModel'] = None
-
-        try:
-            metadata['DetectorName'] = metadata['Instrument']['Detectors']['Detector']['Manufacturer']['Model']
-        except:
-            metadata['DetectorName'] = None
+    try:
+        metadata['DetectorName'] = metadatadict_czi['ImageDocument']['Metadata']['Information']['Instrument']['Detectors']['Detector']['Manufacturer']['Model']
+    except KeyError as e:
+        print('Key not found:', e)
+        metadata['DetectorName'] = None
 
         # delete some key from dict
-        del metadata['Instrument']
+        # del metadata['Instrument']
 
     # check for well information
     metadata['Well_ArrayNames'] = []
@@ -503,7 +527,7 @@ def get_metadata_czi(filename, dim2none=False):
     try:
         print('Trying to extract Scene and Well information if existing ...')
         # extract well information from the dictionary
-        allscenes = metadata['Information']['Image']['Dimensions']['S']['Scenes']['Scene']
+        allscenes = metadatadict_czi['ImageDocument']['Metadata']['Information']['Image']['Dimensions']['S']['Scenes']['Scene']
 
         # loop over all detected scenes
         for s in range(metadata['SizeS']):
@@ -523,12 +547,12 @@ def get_metadata_czi(filename, dim2none=False):
             try:
                 metadata['Well_Indices'].append(well['Index'])
             except KeyError as e:
-                #print('Key not found in Metadata Dictionary:', e)
+                # print('Key not found in Metadata Dictionary:', e)
                 metadata['Well_Indices'].append(None)
             try:
                 metadata['Well_PositionNames'].append(well['Name'])
             except KeyError as e:
-                #print('Key not found in Metadata Dictionary:', e)
+                # print('Key not found in Metadata Dictionary:', e)
                 metadata['Well_PositionNames'].append(None)
 
             # metadata['Well_ColId'].append(well['Shape']['ColumnIndex'])
@@ -565,8 +589,8 @@ def get_metadata_czi(filename, dim2none=False):
     except KeyError as e:
         print('No valid Scene or Well information found:', e)
 
-    del metadata['Information']
-    del metadata['Scaling']
+    # del metadata['Information']
+    # del metadata['Scaling']
 
     # close CZI file
     czi.close()
@@ -1401,7 +1425,7 @@ def show_napari(array, metadata,
                     print('Scaling Factors: ', scalefactors)
 
                     # get min-max values for initial scaling
-                    #clim = calc_scaling(channel)
+                    # clim = calc_scaling(channel)
 
                     viewer.add_image(channel,
                                      name=chname,
@@ -1426,7 +1450,7 @@ def show_napari(array, metadata,
                 print('Scaling Factors: ', scalefactors)
 
                 # get min-max values for initial scaling
-                #clim = calc_scaling(array)
+                # clim = calc_scaling(array)
 
                 viewer.add_image(array,
                                  name=chname,
@@ -1506,11 +1530,11 @@ def writexml_ometiff(filename, xmlsuffix='_OMETIFF_MetaData.xml'):
         ext = '.ome.tif'
 
     with tifffile.TiffFile(filename) as tif:
-        #omexml_string = tif[0].image_description.decode('utf-8')
+        # omexml_string = tif[0].image_description.decode('utf-8')
         omexml_string = tif[0].image_description
 
     # get tree from string
-    #tree = ET.ElementTree(ET.fromstring(omexml_string.encode('utf-8')))
+    # tree = ET.ElementTree(ET.fromstring(omexml_string.encode('utf-8')))
     tree = ET.ElementTree(ET.fromstring(omexml_string))
 
     # change file name
