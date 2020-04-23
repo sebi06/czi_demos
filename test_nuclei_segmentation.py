@@ -19,9 +19,12 @@ import matplotlib.pyplot as plt
 import imgfileutils as imf
 import segmentation_tools as sgt
 from aicsimageio import AICSImage, imread
-from skimage import measure
+from scipy import ndimage
+from skimage import measure, segmentation
 from skimage.measure import regionprops
+from skimage.color import label2rgb
 from MightyMosaic import MightyMosaic
+import progressbar
 
 # select plotting backend
 plt.switch_backend('Qt5Agg')
@@ -30,10 +33,8 @@ verbose = False
 ###############################################################################
 
 # filename = r'/datadisk1/tuxedo/testpictures/Testdata_Zeiss/wellplate/testwell96.czi'
+# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Castor\testwell96.czi"
 filename = r'WP384_4Pos_B4-10_DAPI.czi'
-
-# readmethod: fullstack, chunked, chunked_dask, perscene
-readmethod = 'perscene'
 
 # define platetype and get number of rows and columns
 show_heatmap = True
@@ -58,6 +59,9 @@ objects = pd.DataFrame(columns=cols)
 
 # optional dipslay of "some" results - empty list = no display
 show_image = []
+
+# toggle additional printed output
+verbose = False
 
 # set number of Scenes for testing
 # SizeS = 1
@@ -107,9 +111,6 @@ if use_method == 'zentf':
 startp = perf_counter()
 readtime_allscenes = 0
 
-image_counter = 0
-results = pd.DataFrame()
-
 # get the CZI metadata
 # get the metadata from the czi file
 md = imf.get_metadata_czi(filename, dim2none=False)
@@ -120,13 +121,17 @@ img = AICSImage(filename)
 # SizeT = img.size_t
 # SizeZ = img.size_z
 
+# readmethod: fullstack, chunked, chunked_dask, perscene
+readmethod = 'perscene'
+
 if readmethod == 'chunked':
     # start the timer
     start = process_time()
     img = AICSImage(filename, chunk_by_dims=["S"])
     stack = img.get_image_data()
     end = process_time()
-    print('Runtime CZI Reading using method: ', readmethod, str(end - start))
+    # if verbose:
+    print('Runtime CZI Reading using method: ', readmethod, end - start)
 
 if readmethod == 'chunked_dask':
     # start the timer
@@ -134,7 +139,8 @@ if readmethod == 'chunked_dask':
     img = AICSImage(filename, chunk_by_dims=["S"])
     stack = img.get_image_dask_data()
     end = process_time()
-    print('Runtime CZI Reading using method: ', readmethod, str(end - start))
+    if verbose:
+        print('Runtime CZI Reading using method: ', readmethod, str(end - start))
 
 if readmethod == 'fullstack':
     # start the timer
@@ -142,9 +148,14 @@ if readmethod == 'fullstack':
     img = AICSImage(filename)
     stack = img.get_image_data()
     end = process_time()
-    print('Runtime CZI Reading using method: ', readmethod, str(end - start))
+    if verbose:
+        print('Runtime CZI Reading using method: ', readmethod, str(end - start))
 
-for s in range(md['SizeS']):
+image_counter = 0
+results = pd.DataFrame()
+
+for s in progressbar.progressbar(range(md['SizeS']), redirect_stdout=True):
+    # for s in range(md['SizeS']):
     for t in range(md['SizeT']):
         for z in range(md['SizeZ']):
 
@@ -154,7 +165,8 @@ for s in range(md['SizeS']):
                       'C': chindex,
                       'Number': 0}
 
-            print('Analyzing S-T-Z-C: ', s, t, z, chindex)
+            if verbose:
+                print('Analyzing S-T-Z-C: ', s, t, z, chindex)
 
             if readmethod == 'chunked_dask':
                 # start the timer
@@ -245,8 +257,8 @@ for s in range(md['SizeS']):
                     mask, num_features = ndimage.label(binary)
                     mask = mask.astype(np.int)
 
-                # clear the border
-                mask = segmentation.clear_border(mask)
+            # clear the border
+            mask = segmentation.clear_border(mask)
 
             # measure region properties
             to_measure = ('label',
@@ -284,7 +296,8 @@ for s in range(md['SizeS']):
             # count the number of objects
             values['Number'] = props.shape[0]
             # values['Number'] = len(regions) - 1
-            print('Well:', props['WellId'].iloc[0], ' Objects: ', values['Number'])
+            if verbose:
+                print('Well:', props['WellId'].iloc[0], ' Objects: ', values['Number'])
 
             # update dataframe containing the number of objects
             objects = objects.append(pd.DataFrame(values, index=[0]),
@@ -295,10 +308,13 @@ for s in range(md['SizeS']):
             image_counter += 1
             # optional display of results
             if image_counter - 1 in show_image:
+                print('Well:', props['WellId'].iloc[0],
+                      'Index S-T-Z-C:', s, t, z, cindex,
+                      'Objects:', values['Number'])
                 ax = sgt.plot_results(image2d, mask, props, add_bbox=True)
 
 
-if readmethod == 'perscene':
+if verbose and readmethod == 'perscene':
     print('Total time CZI Reading using method: ', readmethod, readtime_allscenes)
 
 # reorder dataframe with single objects
@@ -309,8 +325,9 @@ results = results.reindex(columns=new_order)
 img.close()
 
 # get the end time for the total pipeline
-endp = perf_counter()
-print('Runtime Segmentation Pipeline : ' + str(endp - startp))
+if verbose:
+    endp = perf_counter()
+    print('Runtime Segmentation Pipeline : ' + str(endp - startp))
 
 # optional display of a heatmap
 if show_heatmap:

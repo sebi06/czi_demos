@@ -45,6 +45,7 @@ from skimage.measure import label, regionprops
 from MightyMosaic import MightyMosaic
 
 try:
+    print('Trying to find mxnet library ...')
     import mxnet
     from cellpose import plot, transforms
     from cellpose import models, utils
@@ -52,8 +53,10 @@ try:
 except ImportError as error:
     # Output expected ImportErrors.
     print(error.__class__.__name__ + ": " + error.msg)
+    print('mxnet will not be used.')
 
 try:
+    print('Trying to find tensorflow library ...')
     # silence tensorflow output
     from silence_tensorflow import silence_tensorflow
     silence_tensorflow()
@@ -63,6 +66,7 @@ try:
 except ImportError as error:
     # Output expected ImportErrors.
     print(error.__class__.__name__ + ": " + error.msg)
+    print('TensorFlow will not be used.')
 
 
 def apply_watershed(binary, min_distance=10):
@@ -371,8 +375,7 @@ def showheatmap(heatmap, parameter2display,
         fig.savefig(savename,
                     dpi=dpi,
                     orientation='portrait',
-                    transparent=False,
-                    frameon=False)
+                    transparent=False)
         print('Heatmap image saved as: ', savename)
     else:
         savename = None
@@ -601,28 +604,31 @@ def set_device():
 
 
 def load_cellpose_model(model_type='nuclei',
-                        gpu=True,
+                        gpu=False,
                         net_avg=True,
-                        batch_size=8,
-                        device=mxnet.cpu()):
+                        batch_size=8):
 
     # load cellpose model for cell nuclei using GPU or CPU
     print('Loading Cellpose Model ...')
 
-    """
-    model = models.Cellpose(gpu=True,
-                            model_type='nuclei',
-                            net_avg=True,
-                            batch_size=8,
-                            device=set_device()
-                            )
-    """
+    # try to get the device
+    try:
+        device = set_device()
+    except NameError as error:
+        print(error.__class__.__name__ + ": " + error.msg)
+        device = None
 
-    model = models.Cellpose(model_type=model_type,
-                            net_avg=net_avg,
-                            batch_size=batch_size,
-                            device=device
-                            )
+    if device is None:
+        model = models.Cellpose(gpu=False,
+                                model_type='nuclei',
+                                net_avg=net_avg,
+                                batch_size=batch_size)
+
+    if device is not None:
+        model = models.Cellpose(model_type=model_type,
+                                net_avg=net_avg,
+                                batch_size=batch_size,
+                                device=device)
 
     # model = models.Cellpose(device=set_device(), model_type='nuclei')
     # model = models.Cellpose(device=mxnet.gpu(), model_type='nuclei')

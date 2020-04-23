@@ -291,11 +291,11 @@ def get_metadata_czi(filename, dim2none=False):
     metadata['Extension'] = 'czi'
     metadata['ImageType'] = 'czi'
 
-    # add axes and shape information using czifile.py
+    # add axes and shape information using czifile package
     metadata['Axes'] = czi.axes
     metadata['Shape'] = czi.shape
 
-    # add axes and shape information using czifile.py
+    # add axes and shape information using aicsimageio package
     czi_aics = AICSImage(filename)
     metadata['Axes_aics'] = czi_aics.dims
     metadata['Shape_aics'] = czi_aics.shape
