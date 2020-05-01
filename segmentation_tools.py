@@ -68,6 +68,15 @@ except ImportError as error:
     print(error.__class__.__name__ + ": " + error.msg)
     print('TensorFlow will not be used.')
 
+try:
+    print('Trying to find stardist library ...')
+    from stardist.models import StarDist2D
+    from csbdeep.utils import Path, normalize
+except ImportError as error:
+    # Output expected ImportErrors.
+    print(error.__class__.__name__ + ": " + error.msg)
+    print('StarDist will not be used.')
+
 
 def apply_watershed(binary, min_distance=10):
     """Apply normal watershed to a binary image
@@ -585,6 +594,41 @@ def segment_nuclei_cellpose(image2d, model,
     return masks[0]
 
 
+def segment_nuclei_stardist(image2d, sdmodel,
+                            prob_thresh=0.4,
+                            overlap_thresh=0.3,
+                            norm=True,
+                            norm_pmin=1,
+                            norm_pmax=99.8,
+                            norm_clip=False):
+
+    # workaround explained here to avoid errors
+    # https://github.com/openai/spinningup/issues/16
+    #os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
+
+    # normalize image
+    image2d_norm = normalize(image2d,
+                             pmin=norm_pmin,
+                             pmax=norm_pmax,
+                             axis=None,
+                             clip=norm_clip,
+                             eps=1e-20,
+                             dtype=np.float32)
+
+    # predict the instances of th single nuclei
+    mask2d, details = sdmodel.predict_instances(image2d_norm,
+                                                axes=None,
+                                                normalizer=None,
+                                                prob_thresh=0.4,
+                                                nms_thresh=0.3,
+                                                n_tiles=None,
+                                                show_tile_progress=True,
+                                                overlap_label=None,
+                                                verbose=False)
+
+    return mask2d
+
+
 def set_device():
     """Check if GPU working, and if so use it
 
@@ -634,6 +678,18 @@ def load_cellpose_model(model_type='nuclei',
     # model = models.Cellpose(device=mxnet.gpu(), model_type='nuclei')
 
     return model
+
+
+def load_stardistmodel(modeltype='Versatile (fluorescent nuclei)'):
+
+    # workaround explained here to avoid errors
+    # https://github.com/openai/spinningup/issues/16
+    os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
+
+    # define and load the stardist model
+    sdmodel = StarDist2D.from_pretrained(modeltype)
+
+    return sdmodel
 
 
 def load_tfmodel(modelfolder='model_folder'):

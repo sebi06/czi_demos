@@ -80,9 +80,31 @@ min_distance = 15
 radius_dilation = 1
 
 # define segmentation method
-use_method = 'scikit'
+# use_method = 'scikit'
 # use_method = 'cellpose'
 # use_method = 'zentf'
+use_method = 'stardist2d'
+
+#######################################################
+
+if use_method == 'stardist2d':
+
+    # load pretrained model
+    # define StarDist 2D model for nucelus detection
+    # 'Versatile (fluorescent nuclei)'
+    # 'Versatile (H&E nuclei)'
+    # 'DSB 2018 (from StarDist 2D paper)'
+
+    # define and load the stardist model
+    sdmodel = sgt.load_stardistmodel(modeltype='Versatile (fluorescent nuclei)')
+
+    stardist_prob_thresh = 0.4
+    stardist_overlap_thresh = 0.3
+    stardist_norm = True
+    stardist_norm_pmin = 1
+    stardist_norm_pmax = 99.8
+    stardist_norm_clip = False
+
 
 # load the ML model from cellpose when needed
 if use_method == 'cellpose':
@@ -257,7 +279,17 @@ for s in progressbar.progressbar(range(md['SizeS']), redirect_stdout=True):
                     mask, num_features = ndimage.label(binary)
                     mask = mask.astype(np.int)
 
-            # clear the border
+            if use_method == 'stardist2d':
+
+                mask = sgt.segment_nuclei_stardist(image2d, sdmodel,
+                                                   prob_thresh=stardist_prob_thresh,
+                                                   overlap_thresh=stardist_overlap_thresh,
+                                                   norm=stardist_norm,
+                                                   norm_pmin=stardist_norm_pmin,
+                                                   norm_pmax=stardist_norm_pmax,
+                                                   norm_clip=stardist_norm_clip)
+
+                # clear the border
             mask = segmentation.clear_border(mask)
 
             # measure region properties
