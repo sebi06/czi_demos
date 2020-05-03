@@ -32,9 +32,9 @@ verbose = False
 
 ###############################################################################
 
-filename = r'/datadisk1/tuxedo/testpictures/Testdata_Zeiss/wellplate/testwell96.czi'
+# filename = r'/datadisk1/tuxedo/testpictures/Testdata_Zeiss/wellplate/testwell96.czi'
 # filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Castor\testwell96.czi"
-# filename = r'WP384_4Pos_B4-10_DAPI.czi'
+filename = r'WP384_4Pos_B4-10_DAPI.czi'
 # filename = r'nuctest01.ome.tiff'
 
 # define platetype and get number of rows and columns
@@ -99,7 +99,9 @@ if use_method == 'stardist2d':
     # define and load the stardist model
     sdmodel = sgt.load_stardistmodel(modeltype='Versatile (fluorescent nuclei)')
 
-    stardist_prob_thresh = 0.4
+    # define the model parameters
+    print('Setting model parameters.')
+    stardist_prob_thresh = 0.5
     stardist_overlap_thresh = 0.3
     stardist_norm = True
     stardist_norm_pmin = 1
