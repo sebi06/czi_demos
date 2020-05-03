@@ -692,6 +692,16 @@ def load_stardistmodel(modeltype='Versatile (fluorescent nuclei)'):
     return sdmodel
 
 
+def stardistmodel_from_folder(modelfolder, mdname='2D_dsb2018'):
+
+    # workaround explained here to avoid errors
+    # https://github.com/openai/spinningup/issues/16
+    os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
+    sdmodel = StarDist2D(None, name=mdname, basedir=modelfolder)
+
+    return sdmodel
+
+
 def load_tfmodel(modelfolder='model_folder'):
 
     start = perf_counter()

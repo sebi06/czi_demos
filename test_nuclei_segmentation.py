@@ -32,14 +32,15 @@ verbose = False
 
 ###############################################################################
 
-# filename = r'/datadisk1/tuxedo/testpictures/Testdata_Zeiss/wellplate/testwell96.czi'
+filename = r'/datadisk1/tuxedo/testpictures/Testdata_Zeiss/wellplate/testwell96.czi'
 # filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Castor\testwell96.czi"
-filename = r'WP384_4Pos_B4-10_DAPI.czi'
+# filename = r'WP384_4Pos_B4-10_DAPI.czi'
+# filename = r'nuctest01.ome.tiff'
 
 # define platetype and get number of rows and columns
 show_heatmap = True
 if show_heatmap:
-    platetype = 384
+    platetype = 96
     nr, nc = sgt.getrowandcolumn(platetype=platetype)
 
 chindex = 0  # channel containing the objects, e.g. the nuclei
@@ -133,11 +134,10 @@ if use_method == 'zentf':
 startp = perf_counter()
 readtime_allscenes = 0
 
-# get the CZI metadata
-# get the metadata from the czi file
-md = imf.get_metadata_czi(filename, dim2none=False)
+# get the metadata
+md, additional_mdczi = imf.get_metadata(filename, omeseries=0)
 
-# get AICSImageIO object using the python wrapper for libCZI
+# get AICSImageIO object using the python wrapper for libCZI (if file is CZI)
 img = AICSImage(filename)
 # SizeS = img.size_s
 # SizeT = img.size_t
@@ -315,9 +315,18 @@ for s in progressbar.progressbar(range(md['SizeS']), redirect_stdout=True):
             # props = [r for r in props if r.area >= minsize]
 
             # add well information for CZI metadata
-            props['WellId'] = md['Well_ArrayNames'][s]
-            props['Well_ColId'] = md['Well_ColId'][s]
-            props['Well_RowId'] = md['Well_RowId'][s]
+            try:
+                props['WellId'] = md['Well_ArrayNames'][s]
+                props['Well_ColId'] = md['Well_ColId'][s]
+                props['Well_RowId'] = md['Well_RowId'][s]
+            except KeyError as error:
+                # Output expected ImportErrors.
+                print('Key not found:', error)
+                print('Well Information not found. Using S-Index.')
+                props['WellId'] = s
+                props['Well_ColId'] = s
+                props['Well_RowId'] = s
+                show_heatmap = False
 
             # add plane indices
             props['S'] = s

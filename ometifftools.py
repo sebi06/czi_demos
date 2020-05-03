@@ -123,7 +123,7 @@ def writeOMETIFFplanes(pixel, SizeT=1, SizeZ=1, SizeC=1, order='TZCXY', verbose=
 
 
 def write_ometiff_aicsimageio(savepath, imgarray, metadata,
-                              czireader='aicsimageio',
+                              reader='aicsimageio',
                               overwrite=False):
     """Write an OME-TIFF file from an image array based on the metadata
 
@@ -134,8 +134,8 @@ def write_ometiff_aicsimageio(savepath, imgarray, metadata,
     :param metadata: metadata dictionary with the required information
     to create an correct OME-TIFF file
     :type metadata: dict
-    :param czireader: string (aicsimagio or czifile) specifying
-    the used CZI reader, defaults to aicsimageio
+    :param reader: string (aicsimagio or czifile) specifying
+    the used reader, defaults to aicsimageio
     :type metadata: str
     :param overwrite: option to overwrite an existing OME-TIFF, defaults to False
     :type overwrite: bool, optional
@@ -161,7 +161,7 @@ def write_ometiff_aicsimageio(savepath, imgarray, metadata,
         channel_names = None
 
     # get the dimensions and their position inside the dimension string
-    if czireader == 'aicsimageio':
+    if reader == 'aicsimageio':
 
         dims_dict, dimindex_list, numvalid_dims = imf.get_dimorder(metadata['Axes_aics'])
 
@@ -176,7 +176,7 @@ def write_ometiff_aicsimageio(savepath, imgarray, metadata,
         # remove the S character from the dimension string
         new_dimorder = metadata['Axes_aics'].replace('S', '')
 
-    if czireader == 'czifile':
+    if reader == 'czifile':
 
         new_dimorder = metadata['Axes']
         dims_dict, dimindex_list, numvalid_dims = imf.get_dimorder(metadata['Axes'])

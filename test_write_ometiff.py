@@ -18,8 +18,12 @@ from aicsimageio.writers import ome_tiff_writer
 import ometifftools as ott
 
 
-filename = r'/datadisk1/tuxedo/testpictures/Testdata_Zeiss/celldivision/CellDivision_T=10_Z=15_CH=2_DCV_small.czi'
-fileout = r'/datadisk1/tuxedo/testpictures/Testdata_Zeiss/celldivision/testwrite.ome.tiff'
+#filename = r'/datadisk1/tuxedo/testpictures/Testdata_Zeiss/celldivision/CellDivision_T=10_Z=15_CH=2_DCV_small.czi'
+#filename = r'/datadisk1/tuxedo/temp/input/nuctest01.ome.tiff'
+#filename = r'/datadisk1/tuxedo/temp/input/A01.czi'
+filename = r'/datadisk1/tuxedo/temp/input/WP384_4Pos_B4-10_DAPI.czi'
+fileout = r'/datadisk1/tuxedo/temp/output/testwrite.ome.tiff'
+
 
 md, addmd = imf.get_metadata(filename)
 
@@ -29,7 +33,7 @@ stack = img.get_image_data()
 
 # save file as OME-TIFF
 fs = ott.write_ometiff_aicsimageio(fileout, stack, md,
-                                   czireader='aicsimageio',
+                                   reader='aicsimageio',
                                    overwrite=True)
 
-print('Save CZI file as:', fs)
+print('Save stack as:', fs)
