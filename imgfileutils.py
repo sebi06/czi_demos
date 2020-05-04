@@ -2,9 +2,9 @@
 
 #################################################################
 # File        : imgfileutils.py
-# Version     : 0.7
+# Version     : 0.8
 # Author      : czsrh
-# Date        : 02.05.2020
+# Date        : 04.05.2020
 # Institution : Carl Zeiss Microscopy GmbH
 #
 # Copyright (c) 2020 Carl Zeiss AG, Germany. All Rights Reserved.
@@ -1608,6 +1608,14 @@ def getImageSeriesIDforWell(welllist, wellID):
 
 
 def addzeros(number):
+    """Convert a number into a string and add leading zeros.
+    Typically used to construct filenames with equal lengths.
+
+    :param number: the number
+    :type number: int
+    :return: zerostring - string with leading zeros
+    :rtype: str
+    """
 
     if number < 10:
         zerostring = '000' + str(number)

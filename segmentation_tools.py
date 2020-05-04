@@ -595,7 +595,7 @@ def segment_nuclei_cellpose(image2d, model,
 
 
 def segment_nuclei_stardist(image2d, sdmodel,
-                            prob_thresh=0.4,
+                            prob_thresh=0.5,
                             overlap_thresh=0.3,
                             norm=True,
                             norm_pmin=1,
