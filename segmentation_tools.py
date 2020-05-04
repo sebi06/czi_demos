@@ -289,7 +289,7 @@ def cutout_subimage(image2d,
     :rtype: NumPy.Array
     """
 
-    image2d = image2d[starty: height, startx:width]
+    image2d = image2d[starty:starty + height, startx:startx + width]
 
     return image2d
 

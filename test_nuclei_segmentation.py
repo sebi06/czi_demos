@@ -34,32 +34,33 @@ verbose = False
 
 # filename = r'/datadisk1/tuxedo/testpictures/Testdata_Zeiss/wellplate/testwell96.czi'
 # filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Castor\testwell96.czi"
-filename = r'WP384_4Pos_B4-10_DAPI.czi'
+# filename = r'WP384_4Pos_B4-10_DAPI.czi'
 # filename = r'nuctest01.ome.tiff'
+filename = 'A01.czi'
 
 # define platetype and get number of rows and columns
-show_heatmap = True
+show_heatmap = False
 if show_heatmap:
     platetype = 96
     nr, nc = sgt.getrowandcolumn(platetype=platetype)
 
 chindex = 0  # channel containing the objects, e.g. the nuclei
-minsize = 20  # minimum object size [pixel]
+minsize = 200  # minimum object size [pixel]
 maxsize = 5000  # maximum object size [pixel]
 
 # define cutout size for subimage
-cutimage = False
-startx = 0
-starty = 0
-width = 1024
-height = 1024
+cutimage = True
+startx = 500
+starty = 500
+width = 640
+height = 640
 
 # define columns names for dataframe
 cols = ['S', 'T', 'Z', 'C', 'Number']
 objects = pd.DataFrame(columns=cols)
 
 # optional dipslay of "some" results - empty list = no display
-show_image = []
+show_image = [0]
 
 # toggle additional printed output
 verbose = False
@@ -352,7 +353,7 @@ for s in progressbar.progressbar(range(md['SizeS']), redirect_stdout=True):
             # optional display of results
             if image_counter - 1 in show_image:
                 print('Well:', props['WellId'].iloc[0],
-                      'Index S-T-Z-C:', s, t, z, cindex,
+                      'Index S-T-Z-C:', s, t, z, chindex,
                       'Objects:', values['Number'])
                 ax = sgt.plot_results(image2d, mask, props, add_bbox=True)
 
