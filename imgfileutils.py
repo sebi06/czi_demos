@@ -513,7 +513,12 @@ def get_metadata_czi(filename, dim2none=False):
         metadata['ObjNominalMag'] = None
 
     try:
-        metadata['ObjMag'] = metadata['ObjNominalMag'] * metadata['TubelensMag']
+        if metadata['TubelensMag'] is not None:
+            metadata['ObjMag'] = metadata['ObjNominalMag'] * metadata['TubelensMag']
+        if metadata['TubelensMag'] is None:
+            print('No TublensMag found. Use 1 instead')
+            metadata['ObjMag'] = metadata['ObjNominalMag'] * 1.0
+
     except KeyError as e:
         print('Key not found:', e)
         metadata['ObjMag'] = None
@@ -630,7 +635,7 @@ def get_metadata_czi(filename, dim2none=False):
             # count the number of different wells
             metadata['NumWells'] = len(metadata['WellCounter'].keys())
 
-    except KeyError as e:
+    except (KeyError, TypeError) as e:
         print('No valid Scene or Well information found:', e)
 
     # close CZI file
