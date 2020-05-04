@@ -36,7 +36,8 @@ verbose = False
 # filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Castor\testwell96.czi"
 # filename = r'WP384_4Pos_B4-10_DAPI.czi'
 # filename = r'nuctest01.ome.tiff'
-filename = 'A01.czi'
+# filename = 'A01.czi'
+filename = r'/datadisk1/tuxedo/temp/input/Osteosarcoma_01.czi'
 
 # define platetype and get number of rows and columns
 show_heatmap = False
@@ -44,12 +45,12 @@ if show_heatmap:
     platetype = 96
     nr, nc = sgt.getrowandcolumn(platetype=platetype)
 
-chindex = 0  # channel containing the objects, e.g. the nuclei
+chindex = 2  # channel containing the objects, e.g. the nuclei
 minsize = 200  # minimum object size [pixel]
 maxsize = 5000  # maximum object size [pixel]
 
 # define cutout size for subimage
-cutimage = True
+cutimage = False
 startx = 500
 starty = 500
 width = 640
@@ -322,7 +323,7 @@ for s in progressbar.progressbar(range(md['SizeS']), redirect_stdout=True):
                 props['WellId'] = md['Well_ArrayNames'][s]
                 props['Well_ColId'] = md['Well_ColId'][s]
                 props['Well_RowId'] = md['Well_RowId'][s]
-            except KeyError as error:
+            except (IndexError, KeyError) as error:
                 # Output expected ImportErrors.
                 print('Key not found:', error)
                 print('Well Information not found. Using S-Index.')
