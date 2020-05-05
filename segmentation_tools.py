@@ -200,7 +200,7 @@ def segment_threshold(image2d,
     """
 
     # filter image
-    if filtermethod == 'none':
+    if filtermethod is None:
         image2d_filtered = image2d
     if filtermethod == 'median':
         image2d_filtered = median(image2d, selem=disk(filtersize))

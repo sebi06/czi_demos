@@ -34,19 +34,22 @@ verbose = False
 
 # filename = r'/datadisk1/tuxedo/testpictures/Testdata_Zeiss/wellplate/testwell96.czi'
 # filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Castor\testwell96.czi"
-# filename = r'WP384_4Pos_B4-10_DAPI.czi'
+filename = r'WP384_4Pos_B4-10_DAPI.czi'
 # filename = r'nuctest01.ome.tiff'
 # filename = 'A01.czi'
-filename = r'/datadisk1/tuxedo/temp/input/Osteosarcoma_01.czi'
+# filename = r'/datadisk1/tuxedo/temp/input/Osteosarcoma_01.czi'
+# filename = r'c:\Temp\input\Osteosarcoma_02.czi'
+# filename = r'c:\Temp\input\well96_DAPI.czi'
+#filename = r'c:\Temp\input\Translocation_comb_96_5ms.czi'
 
 # define platetype and get number of rows and columns
-show_heatmap = False
+show_heatmap = True
 if show_heatmap:
     platetype = 96
     nr, nc = sgt.getrowandcolumn(platetype=platetype)
 
-chindex = 2  # channel containing the objects, e.g. the nuclei
-minsize = 200  # minimum object size [pixel]
+chindex = 1  # channel containing the objects, e.g. the nuclei
+minsize = 20  # minimum object size [pixel]
 maxsize = 5000  # maximum object size [pixel]
 
 # define cutout size for subimage
@@ -64,22 +67,19 @@ objects = pd.DataFrame(columns=cols)
 show_image = [0]
 
 # toggle additional printed output
-verbose = False
-
-# set number of Scenes for testing
-# SizeS = 1
+verbose = True
 
 # threshold parameters
 filtermethod = 'median'
-# filtermethod = None
+#filtermethod = None
 filtersize = 3
-threshold = 'triangle'
+threshold = 'global_otsu'
+#threshold = 'triangle'
 
 # use watershed for splitting - ws or ws_adv
 use_ws = True
 ws_method = 'ws_adv'
-filtersize_ws = 3
-min_distance = 15
+min_distance = 5
 radius_dilation = 1
 
 # define segmentation method
@@ -140,6 +140,9 @@ readtime_allscenes = 0
 
 # get the metadata
 md, additional_mdczi = imf.get_metadata(filename, omeseries=0)
+
+# set number of Scenes for testing
+#md['SizeS'] = 1
 
 # get AICSImageIO object using the python wrapper for libCZI (if file is CZI)
 img = AICSImage(filename)
@@ -392,10 +395,10 @@ if show_heatmap:
         col = np.int(stats['Well_ColId']['mean'])
         row = np.int(stats['Well_RowId']['mean'])
 
-        # add value for number of objects to heatmap_numobj
+        # add value for number of objects to heatmap_numobj, e.g. 'count'
         heatmap_numobj[row - 1, col - 1] = stats['WellId']['count']
 
-        # add value for specifics params to heatmap
+        # add value for specific params to heatmap, e.g. 'area'
         heatmap_param[row - 1, col - 1] = stats['area']['mean']
 
     df_numobjects = sgt.convert_array_to_heatmap(heatmap_numobj, nr, nc)
@@ -403,9 +406,12 @@ if show_heatmap:
 
     # define parameter to display a single heatmap
     parameter2display = 'ObjectNumbers'
-    colormap = 'YlGnBu'
+    #parameter2display = 'Area'
+    #colormap = 'YlGnBu'
+    colormap = 'cividis_r'
 
     # show the heatmap for a single parameter
+    # use 'df_numobjects' or 'df_params' here
     savename_single = sgt.showheatmap(df_numobjects, parameter2display,
                                       fontsize_title=16,
                                       fontsize_label=16,

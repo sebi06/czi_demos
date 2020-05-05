@@ -563,8 +563,12 @@ def get_metadata_czi(filename, dim2none=False):
                 try:
                     metadata['Well_ArrayNames'].append(allscenes['ArrayName'])
                 except KeyError as e:
-                    print('Key not found in Metadata Dictionary:', e)
-                    metadata['Well_ArrayNames'].append('A1')
+                    #print('Key not found in Metadata Dictionary:', e)
+                    try:
+                        metadata['Well_ArrayNames'].append(well['Name'])
+                    except KeyError as e:
+                        print('Key not found in Metadata Dictionary:', e, 'Using A1 instead')
+                        metadata['Well_ArrayNames'].append('A1')
 
                 try:
                     metadata['Well_Indices'].append(allscenes['Index'])
@@ -602,8 +606,12 @@ def get_metadata_czi(filename, dim2none=False):
                     well = allscenes[s]
                     metadata['Well_ArrayNames'].append(well['ArrayName'])
                 except KeyError as e:
-                    print('Key not found in Metadata Dictionary:', e)
-                    metadata['Well_ArrayNames'].append('A1')
+                    #print('Key not found in Metadata Dictionary:', e)
+                    try:
+                        metadata['Well_ArrayNames'].append(well['Name'])
+                    except KeyError as e:
+                        print('Key not found in Metadata Dictionary:', e, 'Using A1 instead')
+                        metadata['Well_ArrayNames'].append('A1')
 
                 # get the well information
                 try:
