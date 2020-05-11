@@ -34,9 +34,9 @@ verbose = False
 
 # filename = r'/datadisk1/tuxedo/testpictures/Testdata_Zeiss/wellplate/testwell96.czi'
 # filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Castor\testwell96.czi"
-filename = r'WP384_4Pos_B4-10_DAPI.czi'
+#filename = r'WP384_4Pos_B4-10_DAPI.czi'
 # filename = r'nuctest01.ome.tiff'
-# filename = 'A01.czi'
+filename = 'A01.czi'
 # filename = r'/datadisk1/tuxedo/temp/input/Osteosarcoma_01.czi'
 # filename = r'c:\Temp\input\Osteosarcoma_02.czi'
 # filename = r'c:\Temp\input\well96_DAPI.czi'
@@ -48,7 +48,7 @@ if show_heatmap:
     platetype = 96
     nr, nc = sgt.getrowandcolumn(platetype=platetype)
 
-chindex = 1  # channel containing the objects, e.g. the nuclei
+chindex = 0  # channel containing the objects, e.g. the nuclei
 minsize = 20  # minimum object size [pixel]
 maxsize = 5000  # maximum object size [pixel]
 

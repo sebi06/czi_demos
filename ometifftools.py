@@ -219,6 +219,7 @@ def write_ometiff_aicsimageio(savepath, imgarray, metadata,
         with ome_tiff_writer.OmeTiffWriter(savepath, overwrite_file=overwrite) as writer:
             writer.save(imgarray,
                         channel_names=channel_names,
+                        ome_xml=None,
                         image_name=os.path.basename((savepath)),
                         pixels_physical_size=pixels_physical_size,
                         channel_colors=None,
