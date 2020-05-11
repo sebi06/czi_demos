@@ -26,15 +26,12 @@ from aicsimageio import AICSImage, imread
 from skimage import measure, segmentation
 from skimage.measure import regionprops
 from skimage.color import label2rgb
+from skimage.color import rgb2gray
 import progressbar
 from IPython.display import display, HTML
 from MightyMosaic import MightyMosaic
 
-np.random.seed(6)
-lbl_cmap = random_label_cmap()
-
 # specify the filename of the CZI file
-#filename = r'/datadisk1/tuxedo/temp/input/segment_nuclei_CNN.czi'
 filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Atomic\Nuclei\nuclei_RGB\H&E\Tumor_H&E_small2.czi"
 # get the metadata from the czi file
 md, addmd = imf.get_metadata(filename)
@@ -67,6 +64,7 @@ czi = CziFile(filename)
 
 # Get the shape of the data, the coordinate pairs are (start index, size)
 dimensions = czi.dims_shape()
+print(dimensions)
 print(czi.dims)
 print(czi.size)
 print(czi.is_mosaic())  # True
@@ -74,16 +72,19 @@ print(czi.is_mosaic())  # True
 mosaic_data = czi.read_mosaic(C=0, scale_factor=1)
 print('CZI Mosaic Data Shape : ', mosaic_data.shape)
 
+
 plt.figure(figsize=(8, 8))
-data = mosaic_data[0, :, 0, :, :]
-data = np.moveaxis(data, 0, -1)
+image2d = mosaic_data[0, :, 0, :, :]
+image2d = np.moveaxis(image2d, 0, -1)
 
 # convert ZEN BGR into RGB
-data = data[..., ::-1]
+image2d = image2d[..., ::-1]
 
-plt.imshow(data)
+"""
+plt.imshow(image2d)
 plt.axis('off')
 plt.show()
+"""
 
 """
 # Load the image slice I want from the file
@@ -104,28 +105,14 @@ for m in range(0, 4):
 ################
 """
 
-s = 0
-t = 0
-z = 0
-chindex = 0
-minsize = 50
-maxsize = 5000
-
-
-# get AICSImageIO object using the python wrapper for libCZI
-img = AICSImage(filename)
 
 # get the current plane indicies and store them
-values = {'S': s, 'T': t, 'Z': z, 'C': chindex, 'Number': 0}
+values = {'S': 0, 'T': 0, 'Z': 0, 'C': 0, 'Number': 0}
 
 
-# read out a single 2D image planed using AICSImageIO
-image2d = img.get_image_data("YX", S=s, T=t, Z=z, C=chindex)
-image2d = data
-
-n_channel = 1 if image2d.ndim == 2 else X[0].shape[-1]
+n_channel = 1 if image2d.ndim == 2 else image2d.shape[-1]
 axis_norm = (0, 1)   # normalize channels independently
-# axis_norm = (0,1,2) # normalize channels jointly
+# axis_norm = (0, 1, 2)  # normalize channels jointly
 if n_channel > 1:
     print("Normalizing image channels %s." % ('jointly' if axis_norm is None or 2 in axis_norm else 'independently'))
 
@@ -179,7 +166,7 @@ if demo_model:
         "      Please set the variable 'demo_model = False' to load your own trained model.",
         file=sys.stderr, flush=True
     )
-    model = StarDist2D.from_pretrained('Versatile (fluorescent nuclei)')
+    model = StarDist2D.from_pretrained('Versatile (H&E nuclei)')
 
 else:
     model = StarDist2D(None, name='stardist', basedir='models')
@@ -196,7 +183,7 @@ img = normalize(image2d,
 mask, details = model.predict_instances(img,
                                         axes=None,
                                         normalizer=None,
-                                        prob_thresh=0.4,
+                                        prob_thresh=0.7,
                                         nms_thresh=0.3,
                                         n_tiles=None,
                                         show_tile_progress=True,
@@ -222,21 +209,35 @@ to_measure = ('label',
 props = pd.DataFrame(
     measure.regionprops_table(
         mask,
-        intensity_image=image2d,
+        # intensity_image=rgb2gray(image2d),
+        intensity_image=image2d[:, :, 2],
         properties=to_measure
     )
 ).set_index('label')
 
-# filter objects by size
-props = props[(props['area'] >= minsize) & (props['area'] <= maxsize)]
+# filter objects by size and intensity
+
+maxR = 120
+maxG = 130
+maxB = 220
+
+max_meanint = 0.2125 * maxR + 0.7154 * maxG + 0.0721 * maxB
+print('MeanIntensty (max) : ', max_meanint)
+
+
+props = props[(props['area'] >= 50) & (props['area'] <= 1000)]
+props = props[(props['mean_intensity'] <= max_meanint)]
 
 # add plane indices
-props['S'] = s
-props['T'] = t
-props['Z'] = z
-props['C'] = chindex
+props['S'] = 0
+props['T'] = 0
+props['Z'] = 0
+props['C'] = 0
 
 # count the number of objects
 values['Number'] = props.shape[0]
 
 print(values)
+print(props)
+
+ax = sgt.plot_results(image2d, mask, props, add_bbox=True)

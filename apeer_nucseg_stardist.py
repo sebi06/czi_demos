@@ -19,13 +19,14 @@ import pandas as pd
 import imgfileutils as imf
 import ometifftools as ott
 import segmentation_tools as sgt
-from aicsimageio import AICSImage, imread, imread_dask
+from aicsimageio import AICSImage, imread
 from scipy import ndimage
 from skimage import measure, segmentation
 from skimage.measure import regionprops
 from skimage.color import label2rgb
 from MightyMosaic import MightyMosaic
 import progressbar
+import tifffile
 
 verbose = True
 save_resultstack = True
@@ -42,7 +43,8 @@ def execute(imagefile,
             norm=True,
             norm_pmin=1,
             norm_pmax=99.8,
-            norm_clip=False):
+            norm_clip=False,
+            correct_ome=True):
     """Main function to run the stardist object segmentation and measure the object parameters.
 
     :param imagefile: filename of the current image
@@ -111,7 +113,7 @@ def execute(imagefile,
     shape_labelstack[dims_dict['C'] - 1] = 1
 
     # create labelstack for the current scene
-    label5d = np.zeros(shape_labelstack, dtype=np.uint16)
+    label5d = np.zeros(shape_labelstack, dtype=np.int16)
 
     for s in progressbar.progressbar(range(md['SizeS']), redirect_stdout=False):
         # for s in range(md['SizeS']):
@@ -205,16 +207,10 @@ def execute(imagefile,
                                                reader='aicsimageio',
                                                overwrite=True)
 
-            """
-            fs = ott.write_ometiff(name_scene, label5d,
-                                   scalex=md['XScale'],
-                                   scaley=md['YScale'],
-                                   scalez=md['ZScale'],
-                                   dimorder='TZCYX',
-                                   pixeltype=np.uint16,
-                                   swapxyaxes=True,
-                                   series=1)
-            """
+            if correct_ome:
+                old = ("2012-03", "2013-06", r"ome/2016-06")
+                new = ("2016-06", "2016-06", r"OME/2016-06")
+                ott.correct_omeheader(name_scene, old, new)
 
     # reorder dataframe with single objects
     new_order = list(results.columns[-7:]) + list(results.columns[:-7])
@@ -246,9 +242,9 @@ if __name__ == "__main__":
     # filename = r'input/A01.czi'
     # filename = 'input/Osteosarcoma_02.czi'
     # filename = r'input/WP384_4Pos_B4-10_DAPI.czi'
-    # filename = r'c:\Temp\input\Osteosarcoma_02.czi'
-    # filename = r'c:\Temp\input\well96_DAPI.czi'
-    # filename = r'c:\Temp\input\Translocation_comb_96_5ms.czi'
+    #filename = r'c:\Temp\input\Osteosarcoma_02.czi'
+    #filename = r'c:\Temp\input\well96_DAPI.czi'
+    #filename = r'c:\Temp\input\Translocation_comb_96_5ms.czi'
     filename = r'c:\Temp\input\A01.czi'
 
     outputs = execute(filename,
@@ -262,7 +258,8 @@ if __name__ == "__main__":
                       norm=True,
                       norm_pmin=1,
                       norm_pmax=99.8,
-                      norm_clip=False)
+                      norm_clip=False,
+                      correct_ome=True)
 
     print(outputs[0])
     print(outputs[1])

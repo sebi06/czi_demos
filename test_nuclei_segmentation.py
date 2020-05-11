@@ -41,6 +41,7 @@ filename = 'A01.czi'
 # filename = r'c:\Temp\input\Osteosarcoma_02.czi'
 # filename = r'c:\Temp\input\well96_DAPI.czi'
 #filename = r'c:\Temp\input\Translocation_comb_96_5ms.czi'
+#filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Atomic\Nuclei\nuclei_RGB\H&E\Tumor_H&E_small2.czi"
 
 # define platetype and get number of rows and columns
 show_heatmap = True
