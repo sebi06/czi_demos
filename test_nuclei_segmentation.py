@@ -16,8 +16,8 @@ import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import imgfileutils as imf
-import segmentation_tools as sgt
+from czitools import imgfileutils as imf
+from czitools import segmentation_tools as sgt
 from aicsimageio import AICSImage, imread
 from scipy import ndimage
 from skimage import measure, segmentation
@@ -34,23 +34,24 @@ verbose = False
 
 # filename = r'/datadisk1/tuxedo/testpictures/Testdata_Zeiss/wellplate/testwell96.czi'
 # filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Castor\testwell96.czi"
-#filename = r'WP384_4Pos_B4-10_DAPI.czi'
+# filename = r'WP384_4Pos_B4-10_DAPI.czi'
 # filename = r'nuctest01.ome.tiff'
-filename = 'A01.czi'
+# filename = 'A01.czi'
+filename = 'testwell96_A9_1024x1024_Nuc.czi'
 # filename = r'/datadisk1/tuxedo/temp/input/Osteosarcoma_01.czi'
 # filename = r'c:\Temp\input\Osteosarcoma_02.czi'
 # filename = r'c:\Temp\input\well96_DAPI.czi'
-#filename = r'c:\Temp\input\Translocation_comb_96_5ms.czi'
-#filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Atomic\Nuclei\nuclei_RGB\H&E\Tumor_H&E_small2.czi"
+# filename = r'c:\Temp\input\Translocation_comb_96_5ms.czi'
+# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Atomic\Nuclei\nuclei_RGB\H&E\Tumor_H&E_small2.czi"
 
 # define platetype and get number of rows and columns
-show_heatmap = True
+show_heatmap = False
 if show_heatmap:
     platetype = 96
     nr, nc = sgt.getrowandcolumn(platetype=platetype)
 
 chindex = 0  # channel containing the objects, e.g. the nuclei
-minsize = 20  # minimum object size [pixel]
+minsize = 100  # minimum object size [pixel]
 maxsize = 5000  # maximum object size [pixel]
 
 # define cutout size for subimage
@@ -72,13 +73,13 @@ verbose = True
 
 # threshold parameters
 filtermethod = 'median'
-#filtermethod = None
+# filtermethod = None
 filtersize = 3
 threshold = 'global_otsu'
-#threshold = 'triangle'
+# threshold = 'triangle'
 
 # use watershed for splitting - ws or ws_adv
-use_ws = True
+use_ws = False
 ws_method = 'ws_adv'
 min_distance = 5
 radius_dilation = 1
@@ -115,7 +116,8 @@ if use_method == 'stardist2d':
 # load the ML model from cellpose when needed
 if use_method == 'cellpose':
 
-    model = sgt.load_cellpose_model(model_type='nuclei', device=sgt.set_device())
+    # model = sgt.load_cellpose_model(model_type='nuclei', device=sgt.set_device())
+    model = sgt.load_cellpose_model(model_type='nuclei')
 
     # define list of channels for cellpose
     # channels = SizeS * SizeT * SizeZ * [0, 0]
@@ -143,7 +145,7 @@ readtime_allscenes = 0
 md, additional_mdczi = imf.get_metadata(filename, omeseries=0)
 
 # set number of Scenes for testing
-#md['SizeS'] = 1
+# md['SizeS'] = 1
 
 # get AICSImageIO object using the python wrapper for libCZI (if file is CZI)
 img = AICSImage(filename)
@@ -229,10 +231,11 @@ for s in progressbar.progressbar(range(md['SizeS']), redirect_stdout=True):
 
             if use_method == 'cellpose':
                 # get the mask for the current image
-                mask = sgt.segment_nuclei_cellpose(image2d, model,
-                                                   rescale=None,
-                                                   channels=channels,
-                                                   diameter=diameter)
+                mask = sgt.segment_nuclei_cellpose2d(image2d, model,
+                                                     rescale=None,
+                                                     channels=channels,
+                                                     diameter=diameter,
+                                                     verbose=True)
 
             if use_method == 'scikit':
                 mask = sgt.segment_threshold(image2d,
@@ -256,6 +259,8 @@ for s in progressbar.progressbar(range(md['SizeS']), redirect_stdout=True):
                                                       overlap_factor=overlapfactor)
 
                 elif image2d.shape[0] == tile_height and image2d.shape[1] == tile_width:
+                    if verbose:
+                        print('No Tiling or padding required')
                     binary = sgt.segment_zentf(image2d, model,
                                                classlabel=classlabel)
 
@@ -297,7 +302,7 @@ for s in progressbar.progressbar(range(md['SizeS']), redirect_stdout=True):
                                                    norm_pmax=stardist_norm_pmax,
                                                    norm_clip=stardist_norm_clip)
 
-                # clear the border
+            # clear the border
             mask = segmentation.clear_border(mask)
 
             # measure region properties
@@ -407,8 +412,8 @@ if show_heatmap:
 
     # define parameter to display a single heatmap
     parameter2display = 'ObjectNumbers'
-    #parameter2display = 'Area'
-    #colormap = 'YlGnBu'
+    # parameter2display = 'Area'
+    # colormap = 'YlGnBu'
     colormap = 'cividis_r'
 
     # show the heatmap for a single parameter
