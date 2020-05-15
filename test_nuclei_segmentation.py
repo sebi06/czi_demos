@@ -86,9 +86,9 @@ radius_dilation = 1
 
 # define segmentation method
 # use_method = 'scikit'
-# use_method = 'cellpose'
+use_method = 'cellpose'
 # use_method = 'zentf'
-use_method = 'stardist2d'
+# use_method = 'stardist2d'
 
 #######################################################
 
@@ -235,7 +235,8 @@ for s in progressbar.progressbar(range(md['SizeS']), redirect_stdout=True):
                                                      rescale=None,
                                                      channels=channels,
                                                      diameter=diameter,
-                                                     verbose=True)
+                                                     verbose=True,
+                                                     autotune=False)
 
             if use_method == 'scikit':
                 mask = sgt.segment_threshold(image2d,
