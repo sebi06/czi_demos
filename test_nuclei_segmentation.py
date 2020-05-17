@@ -18,6 +18,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from czitools import imgfileutils as imf
 from czitools import segmentation_tools as sgt
+from czitools import visutools as vst
 from aicsimageio import AICSImage, imread
 from scipy import ndimage
 from skimage import measure, segmentation
@@ -34,10 +35,10 @@ verbose = False
 
 # filename = r'/datadisk1/tuxedo/testpictures/Testdata_Zeiss/wellplate/testwell96.czi'
 # filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Castor\testwell96.czi"
-# filename = r'WP384_4Pos_B4-10_DAPI.czi'
+filename = r'WP384_4Pos_B4-10_DAPI.czi'
 # filename = r'nuctest01.ome.tiff'
 # filename = 'A01.czi'
-filename = 'testwell96_A9_1024x1024_Nuc.czi'
+# filename = 'testwell96_A9_1024x1024_Nuc.czi'
 # filename = r'/datadisk1/tuxedo/temp/input/Osteosarcoma_01.czi'
 # filename = r'c:\Temp\input\Osteosarcoma_02.czi'
 # filename = r'c:\Temp\input\well96_DAPI.czi'
@@ -45,10 +46,10 @@ filename = 'testwell96_A9_1024x1024_Nuc.czi'
 # filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Atomic\Nuclei\nuclei_RGB\H&E\Tumor_H&E_small2.czi"
 
 # define platetype and get number of rows and columns
-show_heatmap = False
+show_heatmap = True
 if show_heatmap:
     platetype = 96
-    nr, nc = sgt.getrowandcolumn(platetype=platetype)
+    nr, nc = vst.getrowandcolumn(platetype=platetype)
 
 chindex = 0  # channel containing the objects, e.g. the nuclei
 minsize = 100  # minimum object size [pixel]
@@ -85,8 +86,8 @@ min_distance = 5
 radius_dilation = 1
 
 # define segmentation method
-# use_method = 'scikit'
-use_method = 'cellpose'
+use_method = 'scikit'
+# use_method = 'cellpose'
 # use_method = 'zentf'
 # use_method = 'stardist2d'
 
@@ -366,7 +367,7 @@ for s in progressbar.progressbar(range(md['SizeS']), redirect_stdout=True):
                 print('Well:', props['WellId'].iloc[0],
                       'Index S-T-Z-C:', s, t, z, chindex,
                       'Objects:', values['Number'])
-                ax = sgt.plot_results(image2d, mask, props, add_bbox=True)
+                ax = vst.plot_segresults(image2d, mask, props, add_bbox=True)
 
 
 if verbose and readmethod == 'perscene':
@@ -388,8 +389,8 @@ if verbose:
 if show_heatmap:
 
     # create heatmap array with NaNs
-    heatmap_numobj = sgt.create_heatmap(platetype=platetype)
-    heatmap_param = sgt.create_heatmap(platetype=platetype)
+    heatmap_numobj = vst.create_heatmap(platetype=platetype)
+    heatmap_param = vst.create_heatmap(platetype=platetype)
 
     for well in md['WellCounter']:
         # extract all entries for specific well
@@ -408,8 +409,8 @@ if show_heatmap:
         # add value for specific params to heatmap, e.g. 'area'
         heatmap_param[row - 1, col - 1] = stats['area']['mean']
 
-    df_numobjects = sgt.convert_array_to_heatmap(heatmap_numobj, nr, nc)
-    df_params = sgt.convert_array_to_heatmap(heatmap_param, nr, nc)
+    df_numobjects = vst.convert_array_to_heatmap(heatmap_numobj, nr, nc)
+    df_params = vst.convert_array_to_heatmap(heatmap_param, nr, nc)
 
     # define parameter to display a single heatmap
     parameter2display = 'ObjectNumbers'
@@ -419,7 +420,7 @@ if show_heatmap:
 
     # show the heatmap for a single parameter
     # use 'df_numobjects' or 'df_params' here
-    savename_single = sgt.showheatmap(df_numobjects, parameter2display,
+    savename_single = vst.showheatmap(df_numobjects, parameter2display,
                                       fontsize_title=16,
                                       fontsize_label=16,
                                       colormap=colormap,
