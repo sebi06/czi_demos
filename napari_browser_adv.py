@@ -19,14 +19,15 @@ from typing import (
 )
 
 from czitools import imgfileutils as imf
-from czitools import segmentation_tools as sgt
-from czitools import visutools as vst
+#from czitools import segmentation_tools as sgt
+#from czitools import visutools as vst
 from aicsimageio import AICSImage, imread
 import dask.array as da
 from nptyping import NDArray
 import os
 import javabridge
 import bioformats
+from pathlib import Path
 
 
 def metadata(path: str) -> Dict[str, Any]:
@@ -82,11 +83,29 @@ def calc_scaling(data, corr_min=1.0,
     return [minvalue, maxvalue]
 
 
+def get_dimpositions(dimstring, tocheck=['B', 'S', 'T', 'Z', 'C']):
+    """Simple function to get the indices of the dimension identifiers in a string
+
+    :param dimstring: dimension string
+    :type dimstring: str
+    :param tocheck: list of entries to check, defaults to ['B', 'S', 'T', 'Z', 'C']
+    :type tocheck: list, optional
+    :return: dictionary with positions of dimensions inside string
+    :rtype: dict
+    """
+    dimpos = {}
+    for p in tocheck:
+        dimpos[p] = dimstring.find(p)
+
+    return dimpos
+
+
 def add_napari(array, metadata,
                blending='additive',
-               gamma=0.85,
+               gamma=0.75,
                verbose=True,
-               use_pylibczi=True):
+               use_pylibczi=True,
+               rename_sliders=False):
     """Show the multidimensional array using the Napari viewer
 
     :param array: multidimensional NumPy.Array containing the pixeldata
@@ -109,15 +128,17 @@ def add_napari(array, metadata,
     if metadata['ImageType'] == 'ometiff':
 
         # find position of dimensions
-        posZ = metadata['DimOrder BF Array'].find('Z')
-        posC = metadata['DimOrder BF Array'].find('C')
-        posT = metadata['DimOrder BF Array'].find('T')
+        dimpos = get_dimpositions(metadata['Axes_aics'])
 
         # get the scalefactors from the metadata
         scalef = imf.get_scalefactor(metadata)
 
         # modify the tuple for the scales for napari
-        scalefactors[posZ] = scalef['zx']
+        scalefactors[dimpos['Z']] = scalef['zx']
+
+        # remove C dimension from scalefactor
+        scalefactors_ch = scalefactors.copy()
+        del scalefactors_ch[dimpos['C']]
 
         # add all channels as layers
         for ch in range(metadata['SizeC']):
@@ -130,42 +151,51 @@ def add_napari(array, metadata,
                 chname = 'CH' + str(ch + 1)
 
             # cutout channel
-            channel = array.take(ch, axis=posC)
+            channel = array.take(ch, axis=dimpos['C'])
             print('Shape Channel : ', ch, channel.shape)
+            new_dimstring = metadata['Axes_aics'].replace('C', '')
 
             # actually show the image array
-            print('Scaling Factors: ', scalefactors)
+            print('Adding Channel  : ', chname)
+            print('Shape Channel   : ', ch, channel.shape)
+            print('Scaling Factors : ', scalefactors_ch)
 
             # get min-max values for initial scaling
-            clim = [channel.min(), np.round(channel.max() * 0.85)]
+            clim = calc_scaling(channel,
+                                corr_min=1.0,
+                                offset_min=0,
+                                corr_max=0.85,
+                                offset_max=0)
+
             if verbose:
                 print('Scaling: ', clim)
 
+            # add channel to napari viewer
             viewer.add_image(channel,
                              name=chname,
-                             scale=scalefactors,
+                             scale=scalefactors_ch,
                              contrast_limits=clim,
                              blending=blending,
                              gamma=gamma)
 
     if metadata['ImageType'] == 'czi':
 
+        # use find position of dimensions
         if not use_pylibczi:
-            # use find position of dimensions
-            posZ = metadata['Axes'].find('Z')
-            posC = metadata['Axes'].find('C')
-            posT = metadata['Axes'].find('T')
+            dimpos = get_dimpositions(metadata['Axes'])
 
         if use_pylibczi:
-            posZ = metadata['Axes_aics'].find('Z')
-            posC = metadata['Axes_aics'].find('C')
-            posT = metadata['Axes_aics'].find('T')
+            dimpos = get_dimpositions(metadata['Axes_aics'])
 
         # get the scalefactors from the metadata
         scalef = imf.get_scalefactor(metadata)
 
         # modify the tuple for the scales for napari
-        scalefactors[posZ] = scalef['zx']
+        scalefactors[dimpos['Z']] = scalef['zx']
+
+        # remove C dimension from scalefactor
+        scalefactors_ch = scalefactors.copy()
+        del scalefactors_ch[dimpos['C']]
 
         if metadata['SizeC'] > 1:
             # add all channels as layers
@@ -182,26 +212,34 @@ def add_napari(array, metadata,
                 # use dask if array is a dask.array
                 if isinstance(array, da.Array):
                     print('Extract Channel using Dask.Array')
-                    channel = array.compute().take(ch, axis=posC)
+                    channel = array.compute().take(ch, axis=dimpos['C'])
+                    new_dimstring = metadata['Axes_aics'].replace('C', '')
 
                 else:
                     # use normal numpy if not
                     print('Extract Channel NumPy.Array')
-                    channel = array.take(ch, axis=posC)
-                    scalefactors_czi = scalefactors.pop(posC)
-
-                print('Shape Channel : ', ch, channel.shape)
+                    channel = array.take(ch, axis=dimpos['C'])
+                    if not use_pylibczi:
+                        new_dimstring = metadata['Axes'].replace('C', '')
+                    if use_pylibczi:
+                        new_dimstring = metadata['Axes_aics'].replace('C', '')
 
                 # actually show the image array
-                print('Adding Channel: ', chname)
-                print('Scaling Factors: ', scalefactors)
+                print('Adding Channel  : ', chname)
+                print('Shape Channel   : ', ch, channel.shape)
+                print('Scaling Factors : ', scalefactors_ch)
 
                 # get min-max values for initial scaling
-                clim = calc_scaling(channel)
+                clim = calc_scaling(channel,
+                                    corr_min=1.0,
+                                    offset_min=0,
+                                    corr_max=0.85,
+                                    offset_max=0)
 
+                # add channel to napari viewer
                 viewer.add_image(channel,
                                  name=chname,
-                                 scale=scalefactors_czi,
+                                 scale=scalefactors_ch,
                                  contrast_limits=clim,
                                  blending=blending,
                                  gamma=gamma)
@@ -230,118 +268,23 @@ def add_napari(array, metadata,
                              blending=blending,
                              gamma=gamma)
 
+    if rename_sliders:
 
-class Processsing(QWidget):
+        print('Renaming the Sliders based on the Dimension String ....')
 
-    def __init__(self):
-        super(QWidget, self).__init__()
-        self.layout = QHBoxLayout(self)
+        # get the position of dimension entries after removing C dimension
+        dimpos_viewer = get_dimpositions(new_dimstring)
 
-        # Initialize tab screen
-        self.tabs = QTabWidget()
-        self.tab1 = QWidget()
-        self.tab2 = QWidget()
-        self.tab3 = QWidget()
+        # get the label of the sliders
+        sliders = viewer.dims.axis_labels
 
-        # self.tabs.setTabPosition(QTabWidget.North)
-
-        # Add tabs
-        self.tabs.addTab(self.tab1, "Gaussian")
-        self.tabs.addTab(self.tab2, "Median")
-        self.tabs.addTab(self.tab3, "Sobel")
-
-        # tab1
-        self.tab1.layout = QHBoxLayout(self)
-        self.sld1 = QSlider(Qt.Horizontal, self)
-        self.btn1 = QPushButton("create result layer", self)
-        # drop down menu
-        self.cb = QComboBox()
-        self.cb.addItems(["reflect", "constant", "nearest", "mirror", "wrap"])
-        # set min and max slider
-        self.sld1.setMinimum(0)
-        self.sld1.setMaximum(10)
-        # add widget to the tab
-        self.tab1.layout.addWidget(self.sld1)
-        self.tab1.layout.addWidget(self.btn1)
-        self.tab1.layout.addWidget(self.cb)
-        # set layout to the tab
-        self.tab1.setLayout(self.tab1.layout)
-        # connect different button/slider
-        self.sld1.valueChanged[int].connect(self.updateValue)
-        self.btn1.clicked.connect(self.buttonClicked)
-        self.cb.currentIndexChanged.connect(self.modeChoice)
-
-        # tab2
-        self.tab2.layout = QHBoxLayout(self)
-        self.sld2 = QSlider(Qt.Horizontal, self)
-        self.btn2 = QPushButton("create result layer", self)
-        self.cb2 = QComboBox()
-        self.cb2.addItems(["diamond", "disk", "square"])
-        self.sld2.setMinimum(0)
-        self.sld2.setMaximum(10)
-        self.tab2.layout.addWidget(self.sld2)
-        self.tab2.layout.addWidget(self.btn2)
-        self.tab2.layout.addWidget(self.cb2)
-        self.tab2.setLayout(self.tab2.layout)
-        self.sld2.valueChanged[int].connect(self.updateValue)
-        self.btn2.clicked.connect(self.buttonClicked)
-        self.cb2.currentIndexChanged.connect(self.morphoChoice)
-
-        # tab3
-        self.tab3.layout = QHBoxLayout(self)
-        self.btn3 = QPushButton("create result layer", self)
-        self.tab3.layout.addWidget(self.btn3)
-        self.tab3.setLayout(self.tab3.layout)
-        self.btn3.clicked.connect(self.buttonClicked)
-        self.btn4 = QPushButton("sobel", self)
-        self.tab3.layout.addWidget(self.btn4)
-        self.tab3.setLayout(self.tab3.layout)
-        self.btn4.clicked.connect(self.buttonClicked)
-
-        # Add tabs to widget
-        self.layout.addWidget(self.tabs)
-        self.setLayout(self.layout)
-
-    # return choices from drop down menu
-    def morphoChoice(self):
-        morpho = self.cb2.currentText()
-        return(morpho)
-
-    def modeChoice(self):
-        mode = self.cb.currentText()
-        return(mode)
-
-    def updateValue(self, value):
-        # findwhich slider is sending the value
-        if self.sender() == self.sld1:
-            result = filters.gaussian(viewer.layers['image_1'].data,
-                                      sigma=value, mode=self.modeChoice(), preserve_range=True)
-            # update napari layer 'result gauss'
-            viewer.layers['result_gauss'].data = result
-        elif self.sender() == self.sld2:
-            selem = getattr(skimage.morphology.selem, self.morphoChoice())
-            result = filters.median(viewer.layers['image_1'].data, selem=selem(value))
-            viewer.layers['result_median'].data = result
-
-    # Create a result layer to apply filter
-    def buttonClicked(self):
-        if self.sender() == self.btn1:
-            viewer.add_image(viewer.layers['image_1'].data, name='result_gauss')
-            self.sld1.setValue(0)
-            self.sld2.setValue(0)
-        elif self.sender() == self.btn2:
-            viewer.add_image(viewer.layers['image_1'].data, name='result_median')
-            self.sld1.setValue(0)
-            self.sld2.setValue(0)
-        elif self.sender() == self.btn3:
-            viewer.add_image(viewer.layers['image_1'].data, name='result_sobel')
-            self.sld1.setValue(0)
-            self.sld2.setValue(0)
-        elif self.sender() == self.btn4:
-            result = filters.sobel(viewer.layers['image_1'].data)
-            viewer.layers['result_sobel'].data = result
-            # Need to adjust napari contrast to result of skimage "as_float"
-            viewer.layers['result_sobel'].contrast_limits_range = viewer.layers['result_sobel']._calc_data_range()
+        # update the labels with the correct dimension strings
+        slidernames = ['B', 'S', 'T', 'Z']
+        for s in slidernames:
+            if dimpos_viewer[s] >= 0:
+                sliders[dimpos_viewer[s]] = s
+        # apply the new labels to the viewer
+        viewer.dims.axis_labels = sliders
 
 
 class Open_files(QWidget):
@@ -373,41 +316,29 @@ class Open_files(QWidget):
             viewer.layers.remove_selected()
 
             # get the metadata
-            md, additional_mdczi = imf.get_metadata(path, omeseries=0)
+            md, addmd = imf.get_metadata(path)
 
             # get AICSImageIO object using the python wrapper for libCZI (if file is CZI)
             img = AICSImage(path)
             stack = img.get_image_data()
 
-            # create scalefcator with all ones
-            scalefactors = [1.0] * len(stack.shape)
+            if md['ImageType'] == 'czi':
+                use_pylibczi = True
+            if md['ImageType'] == 'ometiff':
+                use_pylibczi = False
 
             add_napari(stack, md,
                        blending='additive',
                        gamma=0.85,
                        verbose=True,
-                       use_pylibczi=True)
-
-            """
-            if path.endswith((".tiff", ".tif", ".czi")):
-                # Uses aicsimageio to open these files
-                # (image.io but the channel in last dimension which doesn't)
-                # work with napari
-                image = imread(path)
-            if path.endswith((".jpg", ".png")):
-                image = io.imread(path)
-            if path.endswith((".ome.tiff", "ome.tif")):
-                # a little slow but dask_image imread doesn't work well
-                javabridge.start_vm(class_path=bioformats.JARS)
-                # image = load_bioformats(path)
-                image = imread(path)
-            viewer.add_image(image, name="image_1")
-            """
+                       use_pylibczi=use_pylibczi,
+                       rename_sliders=True)
 
 
 with napari.gui_qt():
+
     # create a viewer and add some images
     viewer = napari.Viewer()
     # add the gui to the viewer as a dock widget
     viewer.window.add_dock_widget(Open_files(), area="right")
-    viewer.window.add_dock_widget(Processsing())
+    # viewer.window.add_dock_widget(Processsing())
