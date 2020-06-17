@@ -226,7 +226,7 @@ for s in progressbar.progressbar(range(md['SizeS']), redirect_stdout=True):
             if cutimage:
                 image2d = sgt.cutout_subimage(image2d,
                                               startx=startx,
-                                              starty=startx,
+                                              starty=starty,
                                               width=width,
                                               height=height)
 

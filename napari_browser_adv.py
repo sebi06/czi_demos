@@ -132,9 +132,12 @@ def add_napari(array, metadata,
 
         # get the scalefactors from the metadata
         scalef = imf.get_scalefactor(metadata)
+        # tempoaray workaround for slider / floating point issue
+        # https://forum.image.sc/t/problem-with-dimension-slider-when-adding-array-as-new-layer-for-ome-tiff/39092/2?u=sebi06
+        scalef['zx'] = np.round(scalef['zx'], 3)
 
         # modify the tuple for the scales for napari
-        scalefactors[dimpos['Z']] = scalef['zx']
+        scalef['zx'] = np.round(scalef['zx'], 3)
 
         # remove C dimension from scalefactor
         scalefactors_ch = scalefactors.copy()
@@ -189,6 +192,9 @@ def add_napari(array, metadata,
 
         # get the scalefactors from the metadata
         scalef = imf.get_scalefactor(metadata)
+        # tempoaray workaround for slider / floating point issue
+        # https://forum.image.sc/t/problem-with-dimension-slider-when-adding-array-as-new-layer-for-ome-tiff/39092/2?u=sebi06
+        scalef['zx'] = np.round(scalef['zx'], 3)
 
         # modify the tuple for the scales for napari
         scalefactors[dimpos['Z']] = scalef['zx']
@@ -317,6 +323,13 @@ class Open_files(QWidget):
 
             # get the metadata
             md, addmd = imf.get_metadata(path)
+
+            # tempoaray workaround for slider / floating point issue
+            # https://forum.image.sc/t/problem-with-dimension-slider-when-adding-array-as-new-layer-for-ome-tiff/39092/2?u=sebi06
+
+            md['XScale'] = np.round(md['XScale'], 3)
+            md['YScale'] = np.round(md['YScale'], 3)
+            md['ZScale'] = np.round(md['ZScale'], 3)
 
             # get AICSImageIO object using the python wrapper for libCZI (if file is CZI)
             img = AICSImage(path)
