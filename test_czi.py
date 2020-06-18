@@ -44,7 +44,8 @@ print('Axes_aics', md['Axes_aics'])
 print('Shape_aics', md['Shape_aics'])
 
 """
-# Mosaic files ignore the S dimension and use an internal mIndex to reconstruct, the scale factor allows one to generate a manageable image
+# Mosaic files ignore the S dimension and use an internal mIndex to reconstruct
+# the scale factor allows one to generate a manageable image
 czi_aics_mosaicsize = czi_aics.read_mosaic_size()
 czi_aics_mosaic_array = czi_aics.read_mosaic(C=0, scalefactor=1.0)
 print('czi_aics_mosaicsize', czi_aics_mosaicsize)

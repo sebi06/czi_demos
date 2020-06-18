@@ -192,7 +192,7 @@ def add_napari(array, metadata,
 
         # get the scalefactors from the metadata
         scalef = imf.get_scalefactor(metadata)
-        # tempoaray workaround for slider / floating point issue
+        # temporary workaround for slider / floating point issue
         # https://forum.image.sc/t/problem-with-dimension-slider-when-adding-array-as-new-layer-for-ome-tiff/39092/2?u=sebi06
         scalef['zx'] = np.round(scalef['zx'], 3)
 
