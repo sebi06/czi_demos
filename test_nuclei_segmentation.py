@@ -43,7 +43,7 @@ filename = r'WP384_4Pos_B4-10_DAPI.czi'
 # filename = r'c:\Temp\input\Osteosarcoma_02.czi'
 # filename = r'c:\Temp\input\well96_DAPI.czi'
 # filename = r'c:\Temp\input\Translocation_comb_96_5ms.czi'
-# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Atomic\Nuclei\nuclei_RGB\H&E\Tumor_H&E_small2.czi"
+# filename = r'C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Atomic\Nuclei\nuclei_RGB\H&E\Tumor_H&E_small2.czi'
 
 # define platetype and get number of rows and columns
 show_heatmap = True
@@ -72,7 +72,7 @@ show_image = [0]
 # toggle additional printed output
 verbose = True
 
-# threshold parameters
+# threshold parameters - will be used depending on the choice for the segmentation method
 filtermethod = 'median'
 # filtermethod = None
 filtersize = 3
@@ -86,19 +86,19 @@ min_distance = 5
 radius_dilation = 1
 
 # define segmentation method
-use_method = 'scikit'
+# use_method = 'scikit'
 # use_method = 'cellpose'
 # use_method = 'zentf'
-# use_method = 'stardist2d'
+use_method = 'stardist2d'
 
 #######################################################
 
 if use_method == 'stardist2d':
 
     # load pretrained model
-    # define StarDist 2D model for nucelus detection
+    # define StarDist 2D model for nucleus detection
     # 'Versatile (fluorescent nuclei)'
-    # 'Versatile (H&E nuclei)'
+    # 'Versatile (H&E nuclei)' - Not supported by this script yet !
     # 'DSB 2018 (from StarDist 2D paper)'
 
     # define and load the stardist model
