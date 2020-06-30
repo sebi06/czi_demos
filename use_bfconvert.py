@@ -57,12 +57,12 @@ def convert_to_ometiff(imagefilepath,
                 czi_stitch = 'false'
 
             # create cmdstring - mind the spaces !!!
-            cmdstring = 'bfconvert -no-upgrade -option zeissczi.attachments ' + czi_att + ' -option zeissczi.autostitch ' + czi_stitch + ' -option ometiff.companion ' + \
-                '"' + file_omexml + '"' + ' ' + '"' + imagefilepath + '"' + " " + '"' + file_ometiff + '"'
+            cmdstring = 'bfconvert -no-upgrade -option zeissczi.attachments ' + czi_att + ' -option zeissczi.autostitch ' + \
+                czi_stitch + ' "' + imagefilepath + '" "' + file_ometiff + '"'
+
         else:
             # create cmdstring for non-CZIs- mind the spaces !!!
-            cmdstring = 'bfconvert -no-upgrade -option ometiff.companion ' + '"' + file_omexml + \
-                '"' + ' ' + '"' + imagefilepath + '"' + " " + '"' + file_ometiff + '"'
+            cmdstring = 'bfconvert -no-upgrade' + ' "' + imagefilepath + '" "' + file_ometiff + '"'
 
         if verbose:
             print('Original ImageFile : ', imagefilepath_woext)
@@ -82,6 +82,6 @@ file_orig = r'C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\OME_TIFF_Co
 
 file_ometiff, file_omexml = convert_to_ometiff(file_orig,
                                                bftoolsdir=bfconvert_path,
-                                               czi_autostitch=True,
+                                               czi_autostitch=False,
                                                czi_include_attachments=False,
                                                verbose=True)
