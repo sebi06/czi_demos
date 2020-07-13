@@ -19,8 +19,6 @@ from typing import (
 )
 
 from czitools import imgfileutils as imf
-#from czitools import segmentation_tools as sgt
-#from czitools import visutools as vst
 from aicsimageio import AICSImage, imread
 import dask.array as da
 from nptyping import NDArray
@@ -120,6 +118,8 @@ def add_napari(array, metadata,
     :type verbose: bool, optional
     :param use_pylibczi: specify if pylibczi was used to read the CZI file, defaults to True
     :type use_pylibczi: bool, optional
+    :param rename_sliders: name slider with correct labels output, defaults to False
+    :type verbose: bool, optional
     """
 
     # create scalefcator with all ones
@@ -324,7 +324,7 @@ class Open_files(QWidget):
             # get the metadata
             md, addmd = imf.get_metadata(path)
 
-            # tempoaray workaround for slider / floating point issue
+            # temporary workaround for slider / floating point issue
             # https://forum.image.sc/t/problem-with-dimension-slider-when-adding-array-as-new-layer-for-ome-tiff/39092/2?u=sebi06
 
             md['XScale'] = np.round(md['XScale'], 3)
