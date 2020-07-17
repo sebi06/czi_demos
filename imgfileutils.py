@@ -440,7 +440,7 @@ def get_metadata_czi(filename, dim2none=False):
         # get channel color
         try:
             channels_colors.append(metadatadict_czi['ImageDocument']['Metadata']['DisplaySetting']
-                                  ['Channels']['Channel']['Color'])
+                                   ['Channels']['Channel']['Color'])
         except:
             channels_colors.append('80808000')
 
@@ -467,7 +467,7 @@ def get_metadata_czi(filename, dim2none=False):
             # get channel colors
             try:
                 channels_colors.append(metadatadict_czi['ImageDocument']['Metadata']['DisplaySetting']
-                                  ['Channels']['Channel'][ch]['Color'])
+                                       ['Channels']['Channel'][ch]['Color'])
             except:
                 # use grayscale instead
                 channels_colors.append('80808000')
