@@ -88,8 +88,8 @@ radius_dilation = 1
 # define segmentation method
 # use_method = 'scikit'
 # use_method = 'cellpose'
-# use_method = 'zentf'
-use_method = 'stardist2d'
+use_method = 'zentf'
+# use_method = 'stardist2d'
 
 #######################################################
 
