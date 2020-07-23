@@ -21,7 +21,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import imgfileutils as imf
-import segmentation_tools as sgt
+#from czitools import imgfileutils as imf
+from czitools import segmentation_tools as sgt
 from aicsimageio import AICSImage, imread
 from skimage import measure, segmentation
 from skimage.measure import regionprops
@@ -68,7 +69,8 @@ print(dimensions)
 print(czi.dims)
 print(czi.size)
 print(czi.is_mosaic())  # True
-# Mosaic files ignore the S dimension and use an internal mIndex to reconstruct, the scale factor allows one to generate a manageable image
+# Mosaic files ignore the S dimension and use an internal mIndex to reconstruct
+# the scale factor allows one to generate a manageable image
 mosaic_data = czi.read_mosaic(C=0, scale_factor=1)
 print('CZI Mosaic Data Shape : ', mosaic_data.shape)
 
@@ -106,7 +108,7 @@ for m in range(0, 4):
 """
 
 
-# get the current plane indicies and store them
+# get the current plane indices and store them
 values = {'S': 0, 'T': 0, 'Z': 0, 'C': 0, 'Number': 0}
 
 
