@@ -26,30 +26,79 @@ from skimage.measure import regionprops
 from skimage.color import label2rgb
 from MightyMosaic import MightyMosaic
 import progressbar
+import shutil
+
 
 # select plotting backend
 plt.switch_backend('Qt5Agg')
 verbose = False
 
-###############################################################################
 
+def save_scene(savefolder, imagefile, scene, label5d, metadata, correct_ome=True):
+
+    print('Saving Scene: ', scene, 'as 5D OME-TIFF stack')
+
+    # save stack for every scene
+    sid = imf.addzeros(s)
+    # keep in mind to use the "pure" filename because inside the container
+    # writing to /input/... is forbidden
+    name_scene = os.path.basename(imagefile).split('.')[0] + \
+        '_S' + sid + '.' + 'ome.tiff'
+
+    complete_savepath = os.path.join(savefolder, name_scene)
+
+    # save file as OME-TIFF
+    fs = imf.write_ometiff_aicsimageio(complete_savepath, label5d, md,
+                                       reader='aicsimageio',
+                                       overwrite=True)
+
+    if correct_ome:
+        old = ("2012-03", "2013-06", r"ome/2016-06")
+        new = ("2016-06", "2016-06", r"OME/2016-06")
+        imf.correct_omeheader(complete_savepath, old, new)
+
+    print('Saved scene: ', complete_savepath)
+
+    return complete_savepath
+
+
+###############################################################################
 # filename = r'/datadisk1/tuxedo/testpictures/Testdata_Zeiss/wellplate/testwell96.czi'
 # filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Castor\testwell96.czi"
-filename = r'WP384_4Pos_B4-10_DAPI.czi'
+# filename = r'WP384_4Pos_B4-10_DAPI.czi'
 # filename = r'nuctest01.ome.tiff'
 # filename = 'A01.czi'
 # filename = 'testwell96_A9_1024x1024_Nuc.czi'
 # filename = r'/datadisk1/tuxedo/temp/input/Osteosarcoma_01.czi'
 # filename = r'c:\Temp\input\Osteosarcoma_02.czi'
-# filename = r'c:\Temp\input\well96_DAPI.czi'
+#filename = r'c:\Temp\input\well96_DAPI.czi'
+filename = r"C:\Temp\input\WP96_4Pos_B4-10_DAPI.czi"
 # filename = r'c:\Temp\input\Translocation_comb_96_5ms.czi'
 # filename = r'C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Atomic\Nuclei\nuclei_RGB\H&E\Tumor_H&E_small2.czi'
 
 # define platetype and get number of rows and columns
-show_heatmap = True
+show_heatmap = False
 if show_heatmap:
     platetype = 96
     nr, nc = vst.getrowandcolumn(platetype=platetype)
+
+# save every scene as separate OME-TIFF
+save_per_scene = True
+if save_per_scene:
+    resultfolder = os.path.basename(filename).split('.')[0] + '_Results'
+    resultfolder = os.path.join(os.path.dirname(filename), resultfolder)
+    # create result folder
+    if os.path.exists(resultfolder):
+        shutil.rmtree(resultfolder)
+
+    # create folder
+    try:
+        os.mkdir(resultfolder)
+    except OSError:
+        print("Creation of the directory %s failed" % resultfolder)
+    else:
+        print("Successfully created the directory %s " % resultfolder)
+
 
 chindex = 0  # channel containing the objects, e.g. the nuclei
 minsize = 100  # minimum object size [pixel]
@@ -88,8 +137,8 @@ radius_dilation = 1
 # define segmentation method
 # use_method = 'scikit'
 # use_method = 'cellpose'
-use_method = 'zentf'
-# use_method = 'stardist2d'
+# use_method = 'zentf'
+use_method = 'stardist2d'
 
 #######################################################
 
@@ -153,6 +202,16 @@ img = AICSImage(filename)
 # SizeS = img.size_s
 # SizeT = img.size_t
 # SizeZ = img.size_z
+
+dims_dict, dimindex_list, numvalid_dims = imf.get_dimorder(md['Axes_aics'])
+shape_labelstack = list(md['Shape_aics'])
+shape_labelstack.pop(dims_dict['S'])
+
+# set channel dimension = 1 because we are only interested in the nuclei
+shape_labelstack[dims_dict['C'] - 1] = 1
+
+# create labelstack for the current scene
+label5d = np.zeros(shape_labelstack, dtype=np.int16)
 
 # readmethod: fullstack, chunked, chunked_dask, perscene
 readmethod = 'perscene'
@@ -307,6 +366,9 @@ for s in progressbar.progressbar(range(md['SizeS']), redirect_stdout=True):
             # clear the border
             mask = segmentation.clear_border(mask)
 
+            # add mask to the label5d stack
+            label5d[t, z, 0, :, :] = mask
+
             # measure region properties
             to_measure = ('label',
                           'area',
@@ -368,6 +430,10 @@ for s in progressbar.progressbar(range(md['SizeS']), redirect_stdout=True):
                       'Index S-T-Z-C:', s, t, z, chindex,
                       'Objects:', values['Number'])
                 ax = vst.plot_segresults(image2d, mask, props, add_bbox=True)
+
+    # save the scene
+    if save_per_scene:
+        complete_savepath = save_scene(resultfolder, filename, s, label5d, md, correct_ome=True)
 
 
 if verbose and readmethod == 'perscene':
