@@ -34,7 +34,7 @@ image5d = np.zeros(shape5d, dtype=md['NumPy.dtype'])
 # remove the S dimension from the dimstring
 dimstring5d = md['Axes_aics'].replace('S', '')
 
-# open the TiffWriter
+# open the TiffWriter in order to save as Multi-Series OME-TIFF
 with tifffile.TiffWriter(savename, append=False) as tif:
 
     for s in progressbar.progressbar(range(md['SizeS']), redirect_stdout=True):
@@ -46,12 +46,12 @@ with tifffile.TiffWriter(savename, append=False) as tif:
                     # do some processing with the image2d
                     # ....
 
-        # update the 5d stack
-        image5d = imf.update5dstack(image5d, image2d,
-                                    dimstring5d=dimstring5d,
-                                    t=t,
-                                    z=z,
-                                    c=c)
+                    # update the 5d stack
+                    image5d = imf.update5dstack(image5d, image2d,
+                                                dimstring5d=dimstring5d,
+                                                t=t,
+                                                z=z,
+                                                c=c)
 
         # write scene as OME-TIFF series
         tif.save(image5d,

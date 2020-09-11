@@ -27,39 +27,13 @@ from skimage.color import label2rgb
 from MightyMosaic import MightyMosaic
 import progressbar
 import shutil
+import tifffile
+import itertools as it
 
 
 # select plotting backend
 plt.switch_backend('Qt5Agg')
 verbose = False
-
-
-def save_scene(savefolder, imagefile, scene, label5d, metadata, correct_ome=True):
-
-    print('Saving Scene: ', scene, 'as 5D OME-TIFF stack')
-
-    # save stack for every scene
-    sid = imf.addzeros(s)
-    # keep in mind to use the "pure" filename because inside the container
-    # writing to /input/... is forbidden
-    name_scene = os.path.basename(imagefile).split('.')[0] + \
-        '_S' + sid + '.' + 'ome.tiff'
-
-    complete_savepath = os.path.join(savefolder, name_scene)
-
-    # save file as OME-TIFF
-    fs = imf.write_ometiff_aicsimageio(complete_savepath, label5d, md,
-                                       reader='aicsimageio',
-                                       overwrite=True)
-
-    if correct_ome:
-        old = ("2012-03", "2013-06", r"ome/2016-06")
-        new = ("2016-06", "2016-06", r"OME/2016-06")
-        imf.correct_omeheader(complete_savepath, old, new)
-
-    print('Saved scene: ', complete_savepath)
-
-    return complete_savepath
 
 
 ###############################################################################
@@ -71,34 +45,22 @@ def save_scene(savefolder, imagefile, scene, label5d, metadata, correct_ome=True
 # filename = 'testwell96_A9_1024x1024_Nuc.czi'
 # filename = r'/datadisk1/tuxedo/temp/input/Osteosarcoma_01.czi'
 # filename = r'c:\Temp\input\Osteosarcoma_02.czi'
-#filename = r'c:\Temp\input\well96_DAPI.czi'
-filename = r"C:\Temp\input\WP96_4Pos_B4-10_DAPI.czi"
+# filename = r'c:\Temp\input\well96_DAPI.czi'
+#filename = r"C:\Temp\input\WP96_4Pos_B4-10_DAPI.czi"
 # filename = r'c:\Temp\input\Translocation_comb_96_5ms.czi'
 # filename = r'C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Atomic\Nuclei\nuclei_RGB\H&E\Tumor_H&E_small2.czi'
+filename = r"testdata/WP96_4Pos_B4-10_DAPI.czi"
+#filename = r'testdata/WP96_2Pos_B2+B4_S=2_T=2_Z=4_C=3_X=512_Y=256.czi'
+
+# create the savename for the OME-TIFF
+savename = filename.split('.')[0] + '.ome.tiff'
+
 
 # define platetype and get number of rows and columns
 show_heatmap = False
 if show_heatmap:
     platetype = 96
     nr, nc = vst.getrowandcolumn(platetype=platetype)
-
-# save every scene as separate OME-TIFF
-save_per_scene = True
-if save_per_scene:
-    resultfolder = os.path.basename(filename).split('.')[0] + '_Results'
-    resultfolder = os.path.join(os.path.dirname(filename), resultfolder)
-    # create result folder
-    if os.path.exists(resultfolder):
-        shutil.rmtree(resultfolder)
-
-    # create folder
-    try:
-        os.mkdir(resultfolder)
-    except OSError:
-        print("Creation of the directory %s failed" % resultfolder)
-    else:
-        print("Successfully created the directory %s " % resultfolder)
-
 
 chindex = 0  # channel containing the objects, e.g. the nuclei
 minsize = 100  # minimum object size [pixel]
@@ -192,26 +154,27 @@ startp = perf_counter()
 readtime_allscenes = 0
 
 # get the metadata
-md, additional_mdczi = imf.get_metadata(filename, omeseries=0)
+md, additional_mdczi = imf.get_metadata(filename)
 
 # set number of Scenes for testing
 # md['SizeS'] = 1
 
 # get AICSImageIO object using the python wrapper for libCZI (if file is CZI)
 img = AICSImage(filename)
-# SizeS = img.size_s
-# SizeT = img.size_t
-# SizeZ = img.size_z
+
 
 dims_dict, dimindex_list, numvalid_dims = imf.get_dimorder(md['Axes_aics'])
-shape_labelstack = list(md['Shape_aics'])
-shape_labelstack.pop(dims_dict['S'])
+shape5d = list(md['Shape_aics'])
+shape5d.pop(dims_dict['S'])
+
+# create image5d for the current scene
+image5d = np.zeros(shape5d, dtype=md['NumPy.dtype'])
 
 # set channel dimension = 1 because we are only interested in the nuclei
-shape_labelstack[dims_dict['C'] - 1] = 1
+shape5d[dims_dict['C'] - 1] = 1
 
-# create labelstack for the current scene
-label5d = np.zeros(shape_labelstack, dtype=np.int16)
+# remove the S dimension from the dimstring
+dimstring5d = md['Axes_aics'].replace('S', '')
 
 # readmethod: fullstack, chunked, chunked_dask, perscene
 readmethod = 'perscene'
@@ -246,195 +209,215 @@ if readmethod == 'fullstack':
 image_counter = 0
 results = pd.DataFrame()
 
-for s in progressbar.progressbar(range(md['SizeS']), redirect_stdout=True):
-    # for s in range(md['SizeS']):
-    for t in range(md['SizeT']):
-        for z in range(md['SizeZ']):
+# open the TiffWriter in order to save as Multi-Series OME-TIFF
+with tifffile.TiffWriter(savename, append=False) as tif:
 
-            values = {'S': s,
-                      'T': t,
-                      'Z': z,
-                      'C': chindex,
-                      'Number': 0}
+    for s in progressbar.progressbar(range(md['SizeS']), redirect_stdout=True):
+        for t in range(md['SizeT']):
+            for z in range(md['SizeZ']):
 
-            if verbose:
-                print('Analyzing S-T-Z-C: ', s, t, z, chindex)
+                values = {'S': s,
+                          'T': t,
+                          'Z': z,
+                          'C': chindex,
+                          'Number': 0}
 
-            if readmethod == 'chunked_dask':
-                # start the timer
-                start = perf_counter()
-                image2d = stack[s, t, z, chindex, :, :].compute()
-                end = perf_counter()
-                readtime_allscenes = readtime_allscenes + (end - start)
+                if verbose:
+                    print('Analyzing S-T-Z-C: ', s, t, z, chindex)
 
-            if readmethod == 'fullstack' or readmethod == 'chunked':
-                image2d = stack[s, t, z, chindex, :, :]
+                if readmethod == 'chunked_dask':
+                    # start the timer
+                    start = perf_counter()
+                    image2d = stack[s, t, z, chindex, :, :].compute()
+                    end = perf_counter()
+                    readtime_allscenes = readtime_allscenes + (end - start)
 
-            if readmethod == 'perscene':
-                # start the timer
-                start = perf_counter()
-                image2d = img.get_image_data("YX",
-                                             S=s,
-                                             T=t,
-                                             Z=z,
-                                             C=chindex)
-                end = perf_counter()
-                readtime_allscenes = readtime_allscenes + (end - start)
+                if readmethod == 'fullstack' or readmethod == 'chunked':
+                    image2d = stack[s, t, z, chindex, :, :]
 
-            # cutout subimage
-            if cutimage:
-                image2d = sgt.cutout_subimage(image2d,
-                                              startx=startx,
-                                              starty=starty,
-                                              width=width,
-                                              height=height)
+                if readmethod == 'perscene':
+                    # start the timer
+                    start = perf_counter()
+                    image2d = img.get_image_data("YX",
+                                                 S=s,
+                                                 T=t,
+                                                 Z=z,
+                                                 C=chindex)
+                    end = perf_counter()
+                    readtime_allscenes = readtime_allscenes + (end - start)
 
-            if use_method == 'cellpose':
-                # get the mask for the current image
-                mask = sgt.segment_nuclei_cellpose2d(image2d, model,
-                                                     rescale=None,
-                                                     channels=channels,
-                                                     diameter=diameter,
-                                                     verbose=True,
-                                                     autotune=False)
+                # cutout subimage
+                if cutimage:
+                    image2d = sgt.cutout_subimage(image2d,
+                                                  startx=startx,
+                                                  starty=starty,
+                                                  width=width,
+                                                  height=height)
 
-            if use_method == 'scikit':
-                mask = sgt.segment_threshold(image2d,
-                                             filtermethod=filtermethod,
-                                             filtersize=filtersize,
-                                             threshold=threshold,
-                                             split_ws=use_ws,
-                                             min_distance=min_distance,
-                                             ws_method=ws_method,
-                                             radius=radius_dilation)
+                if use_method == 'cellpose':
+                    # get the mask for the current image
+                    mask = sgt.segment_nuclei_cellpose2d(image2d, model,
+                                                         rescale=None,
+                                                         channels=channels,
+                                                         diameter=diameter,
+                                                         verbose=True,
+                                                         autotune=False)
 
-            if use_method == 'zentf':
+                if use_method == 'scikit':
+                    mask = sgt.segment_threshold(image2d,
+                                                 filtermethod=filtermethod,
+                                                 filtersize=filtersize,
+                                                 threshold=threshold,
+                                                 split_ws=use_ws,
+                                                 min_distance=min_distance,
+                                                 ws_method=ws_method,
+                                                 radius=radius_dilation)
 
-                classlabel = 1
+                if use_method == 'zentf':
 
-                # check if tiling is required
-                if image2d.shape[0] > tile_height or image2d.shape[1] > tile_width:
-                    binary = sgt.segment_zentf_tiling(image2d, model,
-                                                      tilesize=tile_height,
-                                                      classlabel=classlabel,
-                                                      overlap_factor=overlapfactor)
+                    classlabel = 1
 
-                elif image2d.shape[0] == tile_height and image2d.shape[1] == tile_width:
-                    if verbose:
-                        print('No Tiling or padding required')
-                    binary = sgt.segment_zentf(image2d, model,
-                                               classlabel=classlabel)
+                    # check if tiling is required
+                    if image2d.shape[0] > tile_height or image2d.shape[1] > tile_width:
+                        binary = sgt.segment_zentf_tiling(image2d, model,
+                                                          tilesize=tile_height,
+                                                          classlabel=classlabel,
+                                                          overlap_factor=overlapfactor)
 
-                elif image2d.shape[0] < tile_height or image2d.shape[1] < tile_width:
+                    elif image2d.shape[0] == tile_height and image2d.shape[1] == tile_width:
+                        if verbose:
+                            print('No Tiling or padding required')
+                        binary = sgt.segment_zentf(image2d, model,
+                                                   classlabel=classlabel)
 
-                    # do padding
-                    image2d_padded, pad = sgt.add_padding(image2d,
-                                                          input_height=tile_height,
-                                                          input_width=tile_width)
+                    elif image2d.shape[0] < tile_height or image2d.shape[1] < tile_width:
 
-                    # run prediction on padded image
-                    binary_padded = sgt.segment_zentf(image2d_padded, model,
-                                                      classlabel=classlabel)
+                        # do padding
+                        image2d_padded, pad = sgt.add_padding(image2d,
+                                                              input_height=tile_height,
+                                                              input_width=tile_width)
 
-                    # remove padding from result
-                    binary = binary_padded[pad[0]:tile_height - pad[1], pad[2]:tile_width - pad[3]]
+                        # run prediction on padded image
+                        binary_padded = sgt.segment_zentf(image2d_padded, model,
+                                                          classlabel=classlabel)
 
-                # apply watershed
-                if use_ws:
-                    if ws_method == 'ws':
-                        mask = sgt.apply_watershed(binary,
-                                                   min_distance=min_distance)
-                    if ws_method == 'ws_adv':
-                        mask = sgt.apply_watershed_adv(image2d, binary,
-                                                       min_distance=min_distance,
-                                                       radius=radius_dilation)
-                if not use_ws:
-                    # label the objects
-                    mask, num_features = ndimage.label(binary)
-                    mask = mask.astype(np.int)
+                        # remove padding from result
+                        binary = binary_padded[pad[0]:tile_height - pad[1], pad[2]:tile_width - pad[3]]
 
-            if use_method == 'stardist2d':
+                    # apply watershed
+                    if use_ws:
+                        if ws_method == 'ws':
+                            mask = sgt.apply_watershed(binary,
+                                                       min_distance=min_distance)
+                        if ws_method == 'ws_adv':
+                            mask = sgt.apply_watershed_adv(image2d, binary,
+                                                           min_distance=min_distance,
+                                                           radius=radius_dilation)
+                    if not use_ws:
+                        # label the objects
+                        mask, num_features = ndimage.label(binary)
+                        mask = mask.astype(np.int)
 
-                mask = sgt.segment_nuclei_stardist(image2d, sdmodel,
-                                                   prob_thresh=stardist_prob_thresh,
-                                                   overlap_thresh=stardist_overlap_thresh,
-                                                   norm=stardist_norm,
-                                                   norm_pmin=stardist_norm_pmin,
-                                                   norm_pmax=stardist_norm_pmax,
-                                                   norm_clip=stardist_norm_clip)
+                if use_method == 'stardist2d':
 
-            # clear the border
-            mask = segmentation.clear_border(mask)
+                    mask = sgt.segment_nuclei_stardist(image2d, sdmodel,
+                                                       prob_thresh=stardist_prob_thresh,
+                                                       overlap_thresh=stardist_overlap_thresh,
+                                                       norm=stardist_norm,
+                                                       norm_pmin=stardist_norm_pmin,
+                                                       norm_pmax=stardist_norm_pmax,
+                                                       norm_clip=stardist_norm_clip)
 
-            # add mask to the label5d stack
-            label5d[t, z, 0, :, :] = mask
+                # clear the border
+                mask = segmentation.clear_border(mask)
 
-            # measure region properties
-            to_measure = ('label',
-                          'area',
-                          'centroid',
-                          'max_intensity',
-                          'mean_intensity',
-                          'min_intensity',
-                          'bbox')
+                # add mask to the label5d stack
+                #label5d[t, z, 0, :, :] = mask
 
-            # measure the specified parameters store in dataframe
-            props = pd.DataFrame(
-                measure.regionprops_table(
-                    mask,
-                    intensity_image=image2d,
-                    properties=to_measure
-                )
-            ).set_index('label')
+                # update the 5d stack
+                image5d = imf.update5dstack(image5d, mask,
+                                            dimstring5d=dimstring5d,
+                                            t=t,
+                                            z=z,
+                                            c=chindex)
 
-            # filter objects by size
-            props = props[(props['area'] >= minsize) & (props['area'] <= maxsize)]
-            # props = [r for r in props if r.area >= minsize]
+                # measure region properties
+                to_measure = ('label',
+                              'area',
+                              'centroid',
+                              'max_intensity',
+                              'mean_intensity',
+                              'min_intensity',
+                              'bbox')
 
-            # add well information for CZI metadata
-            try:
-                props['WellId'] = md['Well_ArrayNames'][s]
-                props['Well_ColId'] = md['Well_ColId'][s]
-                props['Well_RowId'] = md['Well_RowId'][s]
-            except (IndexError, KeyError) as error:
-                # Output expected ImportErrors.
-                print('Key not found:', error)
-                print('Well Information not found. Using S-Index.')
-                props['WellId'] = s
-                props['Well_ColId'] = s
-                props['Well_RowId'] = s
-                show_heatmap = False
+                # measure the specified parameters store in dataframe
+                props = pd.DataFrame(
+                    measure.regionprops_table(
+                        mask,
+                        intensity_image=image2d,
+                        properties=to_measure
+                    )
+                ).set_index('label')
 
-            # add plane indices
-            props['S'] = s
-            props['T'] = t
-            props['Z'] = z
-            props['C'] = chindex
+                # filter objects by size
+                props = props[(props['area'] >= minsize) & (props['area'] <= maxsize)]
+                # props = [r for r in props if r.area >= minsize]
 
-            # count the number of objects
-            values['Number'] = props.shape[0]
-            # values['Number'] = len(regions) - 1
-            if verbose:
-                print('Well:', props['WellId'].iloc[0], ' Objects: ', values['Number'])
+                # add well information for CZI metadata
+                try:
+                    props['WellId'] = md['Well_ArrayNames'][s]
+                    props['Well_ColId'] = md['Well_ColId'][s]
+                    props['Well_RowId'] = md['Well_RowId'][s]
+                except (IndexError, KeyError) as error:
+                    # Output expected ImportErrors.
+                    print('Key not found:', error)
+                    print('Well Information not found. Using S-Index.')
+                    props['WellId'] = s
+                    props['Well_ColId'] = s
+                    props['Well_RowId'] = s
+                    show_heatmap = False
 
-            # update dataframe containing the number of objects
-            objects = objects.append(pd.DataFrame(values, index=[0]),
-                                     ignore_index=True)
+                # add plane indices
+                props['S'] = s
+                props['T'] = t
+                props['Z'] = z
+                props['C'] = chindex
 
-            results = results.append(props, ignore_index=True)
+                # count the number of objects
+                values['Number'] = props.shape[0]
+                # values['Number'] = len(regions) - 1
+                if verbose:
+                    print('Well:', props['WellId'].iloc[0], ' Objects: ', values['Number'])
 
-            image_counter += 1
-            # optional display of results
-            if image_counter - 1 in show_image:
-                print('Well:', props['WellId'].iloc[0],
-                      'Index S-T-Z-C:', s, t, z, chindex,
-                      'Objects:', values['Number'])
-                ax = vst.plot_segresults(image2d, mask, props, add_bbox=True)
+                # update dataframe containing the number of objects
+                objects = objects.append(pd.DataFrame(values, index=[0]),
+                                         ignore_index=True)
 
-    # save the scene
-    if save_per_scene:
-        complete_savepath = save_scene(resultfolder, filename, s, label5d, md, correct_ome=True)
+                results = results.append(props, ignore_index=True)
 
+                image_counter += 1
+                # optional display of results
+                if image_counter - 1 in show_image:
+                    print('Well:', props['WellId'].iloc[0],
+                          'Index S-T-Z-C:', s, t, z, chindex,
+                          'Objects:', values['Number'])
+                    ax = vst.plot_segresults(image2d, mask, props,
+                                             add_bbox=True)
+
+        # write scene as OME-TIFF series
+        tif.save(image5d,
+                 photometric='minisblack',
+                 metadata={'axes': dimstring5d,
+                           'PhysicalSizeX': np.round(md['XScale'], 3),
+                           'PhysicalSizeXUnit': md['XScaleUnit'],
+                           'PhysicalSizeY': np.round(md['YScale'], 3),
+                           'PhysicalSizeYUnit': md['YScaleUnit'],
+                           'PhysicalSizeZ': np.round(md['ZScale'], 3),
+                           'PhysicalSizeZUnit': md['ZScaleUnit']
+                           }
+                 )
+    # close the AICSImage object at the end
+    img.close()
 
 if verbose and readmethod == 'perscene':
     print('Total time CZI Reading using method: ', readmethod, readtime_allscenes)
@@ -443,8 +426,6 @@ if verbose and readmethod == 'perscene':
 new_order = list(results.columns[-7:]) + list(results.columns[:-7])
 results = results.reindex(columns=new_order)
 
-# close the AICSImage object at the end
-img.close()
 
 # get the end time for the total pipeline
 if verbose:
@@ -496,8 +477,8 @@ if show_heatmap:
                                       filename=filename,
                                       dpi=100)
 
-    # print(objects)
-    # print(results[:5])
+    print(objects)
+    print(results[:5])
 
     plt.show()
 
