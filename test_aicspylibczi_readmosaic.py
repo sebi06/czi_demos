@@ -15,8 +15,11 @@ plt.switch_backend('Qt5Agg')
 # filename = r'/datadisk1/tuxedo/temp/input/WP96_T=3_Z=4_Ch=2_3x3_A4-A5.czi'
 # filename = r'/datadisk1/tuxedo/temp/input/WP96_T=3_Z=4_Ch=2_5x5_A4.czi'
 #filename = r'/datadisk1/tuxedo/temp/input/DTScan_ID4.czi'
-filename = r"C:\Temp\input\DTScan_ID4.czi"
-#filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Atomic\Nuclei\nuclei_RGB\H&E\Tumor_H&E_small2.czi"
+#filename = r"C:\Temp\input\DTScan_ID4.czi"
+filename = r"C:\Users\m1srh\Downloads\New version with alpha channel to avoid tile dissaperance2.czi"
+# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Atomic\Nuclei\nuclei_RGB\H&E\Tumor_H+E_small2.czi"
+#filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Atomic\Nuclei\nuclei_RGB\H&E\Tumor_H+E.czi"
+#filename = r'D:\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Atomic\Nuclei\nuclei_RGB\H&E\Tumor_H+E.czi'
 
 # get the metadata from the czi file
 md, addmd = imf.get_metadata(filename)
@@ -46,22 +49,25 @@ czi = CziFile(filename)
 
 # Get the shape of the data, the coordinate pairs are (start index, size)
 dimensions = czi.dims_shape()
-print(dimensions)
-print(czi.dims)
-print(czi.size)
-print(czi.is_mosaic())  # True
+print('CZI Dimensions : ', dimensions)
+print('CZI DimeString : ', czi.dims)
+print('CZI Size       : ', czi.size)
+print('CZI IsMosaic   : ', czi.is_mosaic())
+print('CZI Scene Shape consistent : ', czi.shape_is_consistent)
 
-"""
-output = czi.read_image(S=0, M=12, Z=0, C=0)
-image = output[0]
-image_dims = output[1]
-plt.imshow(np.squeeze(image))
-plt.axis('off')
-plt.show()
-"""
-mosaic_data = czi.read_mosaic(C=1, scale_factor=0.25)
 
-plt.imshow(np.squeeze(mosaic_data))
+#output = czi.read_image(S=0, C=0)
+#image = output[0]
+#image_dims = output[1]
+
+mosaic_data = czi.read_mosaic(C=0, scale_factor=1.0)
+image2d = np.squeeze(mosaic_data)
+image2d = np.moveaxis(image2d, 0, -1)
+# convert ZEN BGR into RGB
+image2d = image2d[..., ::-1]
+
+plt.figure(figsize=(12, 12))
+plt.imshow(image2d)
 plt.axis('off')
 plt.show()
 
