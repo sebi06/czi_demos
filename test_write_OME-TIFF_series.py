@@ -11,15 +11,41 @@ from apeer_ometiff_library import io, omexmlClass
 import tifffile
 import itertools as it
 
+
+def update5dstack(image5d, image2d,
+                  dimstring5d='TCZYX',
+                  t=0,
+                  z=0,
+                  c=0):
+
+    # remove XY
+    dimstring5d = dimstring5d.replace('X', '').replace('Y', '')
+
+    if dimstring5d == 'TZC':
+        image5d[t, z, c, :, :] = image2d
+    if dimstring5d == 'TCZ':
+        image5d[t, c, z, :, :] = image2d
+    if dimstring5d == 'ZTC':
+        image5d[z, t, c, :, :] = image2d
+    if dimstring5d == 'ZCT':
+        image5d[z, c, t, :, :] = image2d
+    if dimstring5d == 'CTZ':
+        image5d[c, t, z, :, :] = image2d
+    if dimstring5d == 'CZT':
+        image5d[c, z, t, :, :] = image2d
+
+    return image5d
+
+
 ###################################################################
 
-# filename = r"testdata\WP96_4Pos_B4-10_DAPI.czi"
-filename = r'testdata\WP96_2Pos_B2+B4_S=2_T=2_Z=4_C=3_X=512_Y=256.czi'
+filename = r"testdata\WP96_4Pos_B4-10_DAPI.czi"
+#filename = r'testdata\WP96_2Pos_B2+B4_S=2_T=2_Z=4_C=3_X=512_Y=256.czi'
+#filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\W96_B2+B4_S=2_T=2=Z=4_C=3_Tile=4x8.czi"
 savename = filename.split('.')[0] + '.ome.tiff'
 
 # get the metadata
 md, additional_mdczi = imf.get_metadata(filename)
-numimg = md['SizeS'] * md['SizeT'] * md['SizeZ'] * md['SizeC']
 
 # get AICSImageIO object using the python wrapper for libCZI
 img = AICSImage(filename)
@@ -47,11 +73,11 @@ with tifffile.TiffWriter(savename, append=False) as tif:
                     # ....
 
                     # update the 5d stack
-                    image5d = imf.update5dstack(image5d, image2d,
-                                                dimstring5d=dimstring5d,
-                                                t=t,
-                                                z=z,
-                                                c=c)
+                    image5d = update5dstack(image5d, image2d,
+                                            dimstring5d=dimstring5d,
+                                            t=t,
+                                            z=z,
+                                            c=c)
 
         # write scene as OME-TIFF series
         tif.save(image5d,
