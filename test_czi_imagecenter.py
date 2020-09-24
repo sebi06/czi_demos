@@ -3,7 +3,12 @@ import czifile as zis
 import imgfileutils as imf
 
 #filename = r"C:\Temp\input\DTScan_ID4.czi"
-filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\W96_B2+B4_S=2_T=2=Z=4_C=3_Tile=4x8.czi"
+#filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\W96_B2+B4_S=2_T=2=Z=4_C=3_Tile=4x8.czi"
+filename = r"C:\Users\m1srh\Documents\ImageSC\P2A_B6_M1_GIN-0004-Scene-2-ScanRegion1_unc.czi"
+#filename = r"C:\Users\m1srh\Documents\ImageSC\P2A_B6_M1_GIN-0004-Scene-2-ScanRegion1_AF750.czi"
+#filename = r"C:\Users\m1srh\Documents\ImageSC\P2A_B6_M1_GIN-0004-Scene-2-ScanRegion1_AF594.czi"
+#filename = r"C:\Users\m1srh\Documents\ImageSC\P2A_B6_M1_GIN-0004-Scene-2-ScanRegion1_AF488.czi"
+#filename = r"C:\Users\m1srh\Documents\ImageSC\P2A_B6_M1_GIN-0004-Scene-2-ScanRegion1_DAPI.czi"
 
 # get CZI object
 czi = zis.CziFile(filename)
@@ -40,5 +45,5 @@ print(centerposY)
 # get the metadata from the czi file
 md, additional_mdczi = imf.get_metadata(filename)
 
-print(md['SceneStageCenterX'])
-print(md['SceneStageCenterY'])
+print('StageCenterX : ', md['SceneStageCenterX'])
+print('StageCenterY : ', md['SceneStageCenterY'])

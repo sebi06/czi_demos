@@ -112,7 +112,7 @@ def create_metadata_dict():
                 # 'Axes_czifile': None,
                 # 'Shape_czifile': None,
                 'czi_isRGB': None,
-                'czi_isMosaic': None
+                'czi_isMosaic': None,
                 'ObjNA': None,
                 'ObjMag': None,
                 'ObjID': None,
@@ -390,8 +390,6 @@ def get_metadata_czi(filename, dim2none=False,
         metadata['SizeT_aics'] = czi_aics.size_t
         metadata['SizeS_aics'] = czi_aics.size_s
     except:
-        e = sys.exc_info()[0]
-        print(e)
         metadata['Shape_aics'] = None
         metadata['SizeX_aics'] = None
         metadata['SizeY_aics'] = None
