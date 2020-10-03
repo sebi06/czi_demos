@@ -22,7 +22,8 @@ plt.switch_backend('Qt5Agg')
 #filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Atomic\Nuclei\nuclei_RGB\H&E\Tumor_H+E.czi"
 #filename = r'D:\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Atomic\Nuclei\nuclei_RGB\H&E\Tumor_H+E.czi'
 #filename = r"D:\ImageData\Castor\Z-Stack_DCV\CellDivision_T=10_Z=15_CH=2_DCV_small.czi"
-filename = r'testdata\WP96_2Pos_B2+B4_S=2_T=2_Z=4_C=3_X=512_Y=256.czi'
+#filename = r'testdata\WP96_2Pos_B2+B4_S=2_T=2_Z=4_C=3_X=512_Y=256.czi'
+filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\Experiment-09.czi"
 
 # get the metadata from the czi file
 md, addmd = imf.get_metadata(filename)
@@ -35,6 +36,8 @@ print('Array Shape (czifile)          : ', md['Shape_czifile'])
 print('Dimension Entry (czifile)      : ', md['Axes_czifile'])
 print('Array Shape (aicsimageio)      : ', md['Shape_aics'])
 print('Dimension Entry (aicsimageio)  : ', md['Axes_aics'])
+for d in range(len(md['dims_aicspylibczi'])):
+    print('Dimensions aicspylibczi        : ', md['dims_aicspylibczi'][d])
 print('------------------------------------------------------------')
 print('SizeS : ', md['SizeS'])
 print('SizeT : ', md['SizeT'])
@@ -63,12 +66,12 @@ if md['ImageType'] == 'czi':
 else:
     isCZI = False
 
-if md['isRGB']:
-    isRGB= True
+if md['czi_isRGB']:
+    isRGB = True
 else:
     isRGB = False
 
-if md['czi_ismosaic']:
+if md['czi_isMosaic']:
     isMosaic = True
 else:
     isMosaic = False

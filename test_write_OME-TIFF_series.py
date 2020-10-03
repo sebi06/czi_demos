@@ -39,9 +39,9 @@ def update5dstack(image5d, image2d,
 
 ###################################################################
 
-filename = r"testdata\WP96_4Pos_B4-10_DAPI.czi"
+#filename = r"testdata\WP96_4Pos_B4-10_DAPI.czi"
 #filename = r'testdata\WP96_2Pos_B2+B4_S=2_T=2_Z=4_C=3_X=512_Y=256.czi'
-#filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\W96_B2+B4_S=2_T=2=Z=4_C=3_Tile=4x8.czi"
+filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\W96_B2+B4_S=2_T=2=Z=4_C=3_Tile=4x8.czi"
 savename = filename.split('.')[0] + '.ome.tiff'
 
 # get the metadata

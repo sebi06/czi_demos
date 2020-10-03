@@ -401,7 +401,8 @@ def get_metadata_czi(filename, dim2none=False,
     # get additional data by using pylibczi directly
     # Get the shape of the data, the coordinate pairs are (start index, size)
     aics_czi = CziFile(filename)
-    metadata['dims_aicspylibczi'] = aics_czi.dims_shape()[0]
+    metadata['dims_aicspylibczi'] = aics_czi.dims_shape()
+
     metadata['dimorder_aicspylibczi'] = aics_czi.dims
     metadata['size_aicspylibczi'] = aics_czi.size
     metadata['czi_isMosaic'] = aics_czi.is_mosaic()
