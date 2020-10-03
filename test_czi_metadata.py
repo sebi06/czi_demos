@@ -1,7 +1,9 @@
 import imgfileutils as imf
 
-filename = r"C:\Users\m1srh\Downloads\sub-6368_20x_MsGcg_RbCol4_SMACy3_islet1.czi"
+#filename = r"C:\Users\m1srh\Downloads\sub-6368_20x_MsGcg_RbCol4_SMACy3_islet1.czi"
 #filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Castor\Z-Stack_DCV\CellDivision_T=10_Z=15_CH=2_DCV_small.czi"
+filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\Experiment-09.czi"
+
 
 # get the metadata from the czi file
 md, additional_mdczi = imf.get_metadata(filename)

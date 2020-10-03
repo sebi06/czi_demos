@@ -36,6 +36,8 @@ print('Array Shape (czifile)          : ', md['Shape_czifile'])
 print('Dimension Entry (czifile)      : ', md['Axes_czifile'])
 print('Array Shape (aicsimageio)      : ', md['Shape_aics'])
 print('Dimension Entry (aicsimageio)  : ', md['Axes_aics'])
+for d in range(len(md['dims_aicspylibczi'])):
+    print('Dimensions aicspylibczi        : ', md['dims_aicspylibczi'][d])
 print('------------------------------------------------------------')
 print('SizeS : ', md['SizeS'])
 print('SizeT : ', md['SizeT'])
