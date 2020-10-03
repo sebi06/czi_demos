@@ -22,7 +22,8 @@ plt.switch_backend('Qt5Agg')
 #filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Atomic\Nuclei\nuclei_RGB\H&E\Tumor_H+E.czi"
 #filename = r'D:\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Atomic\Nuclei\nuclei_RGB\H&E\Tumor_H+E.czi'
 #filename = r"D:\ImageData\Castor\Z-Stack_DCV\CellDivision_T=10_Z=15_CH=2_DCV_small.czi"
-filename = r'testdata\WP96_2Pos_B2+B4_S=2_T=2_Z=4_C=3_X=512_Y=256.czi'
+#filename = r'testdata\WP96_2Pos_B2+B4_S=2_T=2_Z=4_C=3_X=512_Y=256.czi'
+filename = r'/datadisk1/tuxedo/testpictures/Testdata_Zeiss/CZI_Testfiles/W96_B2+B4_S=2_T=2=Z=4_C=3_Tile=5x9.czi'
 
 # get the metadata from the czi file
 md, addmd = imf.get_metadata(filename)
@@ -63,29 +64,30 @@ if md['ImageType'] == 'czi':
 else:
     isCZI = False
 
-if md['isRGB']:
-    isRGB= True
+if md['czi_isRGB']:
+    isRGB = True
 else:
     isRGB = False
 
-if md['czi_ismosaic']:
+if md['czi_isMosaic']:
     isMosaic = True
 else:
     isMosaic = False
 
 
-#output = czi.read_image(S=0, C=0)
-#image = output[0]
-#image_dims = output[1]
+output = czi.read_image(S=0, T=0, Z=0, C=0)
+image = output[0]
+image_dims = output[1]
 
-mosaic_data = czi.read_mosaic(C=0, Z=0, scale_factor=0.2)
-image2d = np.squeeze(mosaic_data)
+#mosaic_data = czi.read_mosaic(C=0, T=0, Z=0, scale_factor=1.0)
+#image2d = np.squeeze(mosaic_data)
 #image2d = np.moveaxis(image2d, 0, -1)
 # convert ZEN BGR into RGB
-image2d = image2d[..., ::-1]
+#image2d = image2d[..., ::-1]
 
 plt.figure(figsize=(12, 12))
-plt.imshow(image2d)
+# plt.imshow(image2d)
+plt.imshow(image)
 plt.axis('off')
 plt.show()
 

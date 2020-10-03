@@ -11,7 +11,7 @@ from apeer_ometiff_library import io, omexmlClass
 import tifffile
 import itertools as it
 
-
+"""
 def update5dstack(image5d, image2d,
                   dimstring5d='TCZYX',
                   t=0,
@@ -35,13 +35,14 @@ def update5dstack(image5d, image2d,
         image5d[c, z, t, :, :] = image2d
 
     return image5d
-
+"""
 
 ###################################################################
 
-filename = r"testdata\WP96_4Pos_B4-10_DAPI.czi"
+#filename = r"testdata/WP96_4Pos_B4-10_DAPI.czi"
 #filename = r'testdata\WP96_2Pos_B2+B4_S=2_T=2_Z=4_C=3_X=512_Y=256.czi'
 #filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\W96_B2+B4_S=2_T=2=Z=4_C=3_Tile=4x8.czi"
+filename = r'/datadisk1/tuxedo/testpictures/Testdata_Zeiss/CZI_Testfiles/W96_B2+B4_S=2_T=2=Z=4_C=3_Tile=4x8.czi'
 savename = filename.split('.')[0] + '.ome.tiff'
 
 # get the metadata
@@ -69,15 +70,16 @@ with tifffile.TiffWriter(savename, append=False) as tif:
                 for c in range(md['SizeC']):
                     image2d = img.get_image_data("YX", S=s, T=t, Z=z, C=c)
 
+                    print('Image2D Shape : ', image2d.shape)
                     # do some processing with the image2d
                     # ....
 
                     # update the 5d stack
-                    image5d = update5dstack(image5d, image2d,
-                                            dimstring5d=dimstring5d,
-                                            t=t,
-                                            z=z,
-                                            c=c)
+                    image5d = imf.update5dstack(image5d, image2d,
+                                                dimstring5d=dimstring5d,
+                                                t=t,
+                                                z=z,
+                                                c=c)
 
         # write scene as OME-TIFF series
         tif.save(image5d,
@@ -88,7 +90,8 @@ with tifffile.TiffWriter(savename, append=False) as tif:
                            'PhysicalSizeY': np.round(md['YScale'], 3),
                            'PhysicalSizeYUnit': md['YScaleUnit'],
                            'PhysicalSizeZ': np.round(md['ZScale'], 3),
-                           'PhysicalSizeZUnit': md['ZScaleUnit']
+                           'PhysicalSizeZUnit': md['ZScaleUnit']  # ,
+                           # 'Channel': {'Name': ['DAPI']}
                            }
                  )
 
