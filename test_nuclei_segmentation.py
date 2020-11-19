@@ -2,9 +2,9 @@
 
 #################################################################
 # File        : test_nuclei_segmentation.py
-# Version     : 0.5
+# Version     : 0.6
 # Author      : czsrh
-# Date        : 20.04.2020
+# Date        : 20.10.2020
 # Institution : Carl Zeiss Microscopy GmbH
 #
 # Copyright (c) 2020 Carl Zeiss AG, Germany. All Rights Reserved.
@@ -16,7 +16,8 @@ import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from czitools import imgfileutils as imf
+#from czitools import imgfileutils as imf
+import imgfileutils as imf
 from czitools import segmentation_tools as sgt
 from czitools import visutools as vst
 from aicsimageio import AICSImage, imread
@@ -49,12 +50,15 @@ verbose = False
 #filename = r"C:\Temp\input\WP96_4Pos_B4-10_DAPI.czi"
 # filename = r'c:\Temp\input\Translocation_comb_96_5ms.czi'
 # filename = r'C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Atomic\Nuclei\nuclei_RGB\H&E\Tumor_H&E_small2.czi'
-filename = r"testdata/WP96_4Pos_B4-10_DAPI.czi"
+#filename = r"testdata/WP96_4Pos_B4-10_DAPI.czi"
 #filename = r'testdata/WP96_2Pos_B2+B4_S=2_T=2_Z=4_C=3_X=512_Y=256.czi'
+filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Atomic\Nuclei\nuclei_RGB\H+E\Tumor_H+E_uncompressed_TSeries_cleaned.czi"
 
 # create the savename for the OME-TIFF
 savename = filename.split('.')[0] + '.ome.tiff'
 
+# get the metadata
+md, additional_mdczi = imf.get_metadata(filename)
 
 # define platetype and get number of rows and columns
 show_heatmap = False
@@ -113,7 +117,10 @@ if use_method == 'stardist2d':
     # 'DSB 2018 (from StarDist 2D paper)'
 
     # define and load the stardist model
-    sdmodel = sgt.load_stardistmodel(modeltype='Versatile (fluorescent nuclei)')
+    if not md['czi_isRGB']:
+        sdmodel = sgt.load_stardistmodel(modeltype='Versatile (fluorescent nuclei)')
+    if md['czi_isRGB']:
+        sdmodel = sgt.load_stardistmodel(modeltype='Versatile (H&E nuclei)')
 
     # define the model parameters
     print('Setting model parameters.')
@@ -153,19 +160,20 @@ if use_method == 'zentf':
 startp = perf_counter()
 readtime_allscenes = 0
 
-# get the metadata
-md, additional_mdczi = imf.get_metadata(filename)
-
 # set number of Scenes for testing
-# md['SizeS'] = 1
+md['SizeS'] = 5
 
 # get AICSImageIO object using the python wrapper for libCZI (if file is CZI)
 img = AICSImage(filename)
 
 
 dims_dict, dimindex_list, numvalid_dims = imf.get_dimorder(md['Axes_aics'])
-shape5d = list(md['Shape_aics'])
-shape5d.pop(dims_dict['S'])
+try:
+    shape5d = list(md['Shape_aics'])
+    shape5d.pop(dims_dict['S'])
+except TypeError as e:
+    print(e)
+    shape5d = list(md['size_aicspylibczi'])
 
 # create image5d for the current scene
 image5d = np.zeros(shape5d, dtype=md['NumPy.dtype'])

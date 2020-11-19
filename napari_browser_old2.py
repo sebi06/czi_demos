@@ -11,37 +11,31 @@
 #################################################################
 
 from PyQt5.QtWidgets import (
-    # QPushButton,
-    # QComboBox,
+    QPushButton,
+    QComboBox,
+    QTabWidget,
     QHBoxLayout,
     QFileDialog,
     QDialogButtonBox,
     QWidget,
-    QTableWidget,
-    QTableWidgetItem,
-    # QDockWidget,
-    # QSlider,
+    QSlider,
 )
 from PyQt5.QtCore import Qt
-from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtGui import QFont
-
 import napari
 import numpy as np
-from magicgui import magicgui
 
-# from czitools import imgfileutils as imf
+#from czitools import imgfileutils as imf
 import imgfileutils as imf
-from aicsimageio import AICSImage
+from aicsimageio import AICSImage, imread
 import dask.array as da
 import os
 from pathlib import Path
 
 
-def show_image_napari(array, metadata,
-                      blending='additive',
-                      gamma=0.75,
-                      rename_sliders=False):
+def add_napari(array, metadata,
+               blending='additive',
+               gamma=0.75,
+               rename_sliders=False):
     """Show the multidimensional array using the Napari viewer
 
     :param array: multidimensional NumPy.Array containing the pixeldata
@@ -156,58 +150,8 @@ def show_image_napari(array, metadata,
         for s in slidernames:
             if dimpos_viewer[s] >= 0:
                 sliders[dimpos_viewer[s]] = s
-
         # apply the new labels to the viewer
         viewer.dims.axis_labels = sliders
-
-
-class TableWidget(QWidget):
-
-    # def __init__(self, md):
-    def __init__(self):
-        super(QWidget, self).__init__()
-        self.layout = QHBoxLayout(self)
-        self.mdtable = QTableWidget()
-        self.layout.addWidget(self.mdtable)
-        self.mdtable.setShowGrid(True)
-        self.mdtable.setHorizontalHeaderLabels(['Parameter', 'Value'])
-        header = self.mdtable.horizontalHeader()
-        header.setDefaultAlignment(Qt.AlignLeft)
-
-    def update_metadata(self, md):
-
-        row_count = len(md)
-        col_count = 2
-        self.mdtable.setColumnCount(col_count)
-        self.mdtable.setRowCount(row_count)
-
-        row = 0
-
-        for key, value in md.items():
-            newkey = QTableWidgetItem(key)
-            self.mdtable.setItem(row, 0, newkey)
-            newvalue = QTableWidgetItem(str(value))
-            self.mdtable.setItem(row, 1, newvalue)
-            row += 1
-
-        # fit columns to content
-        self.mdtable.resizeColumnsToContents()
-
-    def update_style(self):
-
-        fnt = QFont()
-        fnt.setPointSize(11)
-        fnt.setBold(True)
-        fnt.setFamily("Arial")
-
-        item1 = QtWidgets.QTableWidgetItem('Parameter')
-        item1.setForeground(QtGui.QColor(25, 25, 25))
-        item1.setFont(fnt)
-        self.mdtable.setHorizontalHeaderItem(0, item1)
-        item2 = QtWidgets.QTableWidgetItem('Value')
-        item2.setForeground(QtGui.QColor(25, 25, 25))
-        item2.setFont(fnt)
-        self.mdtable.setHorizontalHeaderItem(1, item2)
 
 
 class Open_files(QWidget):
@@ -225,6 +169,7 @@ class Open_files(QWidget):
         self.buttonBox.clear()
 
         # Only open following file types
+        # self.file_dialog.setNameFilter("Images (*.czi *.nd2 *.tiff *.tif *.jpg *.png)")
         self.file_dialog.setNameFilter("Images (*.czi *.ome.tiff *ome.tif *.tiff *.tif)")
         self.layout.addWidget(self.file_dialog)
         self.file_dialog.currentChanged.connect(self.open_path)
@@ -233,37 +178,27 @@ class Open_files(QWidget):
 
         if os.path.isfile(path):
 
-            # remove exitings layers from napari
+            # remove exiting layers from napari
             viewer.layers.select_all()
             viewer.layers.remove_selected()
 
             # get the metadata
             md, addmd = imf.get_metadata(path)
 
-            # add the metadata and adapt the table display
-            mdbrowser.update_metadata(md)
-            mdbrowser.update_style()
-
             # get AICSImageIO object
             img = AICSImage(path)
             stack = img.get_image_data()
 
-            # add the image stack to the napari viewer
-            show_image_napari(stack, md,
-                              blending='additive',
-                              gamma=0.85,
-                              rename_sliders=True)
+            add_napari(stack, md,
+                       blending='additive',
+                       gamma=0.85,
+                       rename_sliders=True)
 
 
-# start the main application
 with napari.gui_qt():
 
-    filebrowser = Open_files()
-    mdbrowser = TableWidget()
-
-    # create a viewer
+    # create a viewer and add some images
     viewer = napari.Viewer()
-
-    # add widgets
-    viewer.window.add_dock_widget(filebrowser, name='filebrowser', area='right')
-    viewer.window.add_dock_widget(mdbrowser, name='mdbrowser', area='right')
+    # add the gui to the viewer as a dock widget
+    viewer.window.add_dock_widget(Open_files(), area="right")
+    # viewer.window.add_dock_widget(Processsing())
