@@ -6,7 +6,8 @@ from aicsimageio import AICSImage, imread, imread_dask
 
 
 #filename = r'testdata/CellDivision_T=10_Z=15_CH=2_DCV_small.czi'
-filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Castor\Z-Stack_DCV\NeuroSpheres_DCV.czi"
+#filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Castor\Z-Stack_DCV\NeuroSpheres_DCV.czi"
+filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\AiryScan\FoLu_mCherryEB3_GFPMito_2_Airyscan Processing.czi"
 
 md, addmd = imf.get_metadata(filename)
 
