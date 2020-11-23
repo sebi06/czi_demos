@@ -13,15 +13,14 @@
 import imgfileutils as imf
 
 # define your testfiles here
-filename_ometiff = r'/datadisk1/tuxedo/testpictures/Testdata_Zeiss/celldivision/CellDivision_T=15_Z=20_CH=2_DCV_small.ome.tiff'
-filename_czi = r'/datadisk1/tuxedo/testpictures/Testdata_Zeiss/wellplate/testwell96.czi'
+filename_ometiff = r"C:\Users\m1srh\Documents\GitHub\czi_demos\testdata\CellDivision_T=10_Z=15_CH=2_DCV_small.ome.tiff"
+#filename_czi = r'/datadisk1/tuxedo/testpictures/Testdata_Zeiss/wellplate/testwell96.czi'
 
 # get metadata for czi
-md, addmd = imf.get_metadata(filename_czi)
-xmlczi = imf.writexml_czi(filename_czi)
-print(xmlczi)
+#md, addmd = imf.get_metadata(filename_czi)
+#xmlczi = imf.writexml_czi(filename_czi)
+# print(xmlczi)
 
 # get metadata for OME-TIFF
 xmlometiff = imf.writexml_ometiff(filename_ometiff)
 print(xmlometiff)
-
