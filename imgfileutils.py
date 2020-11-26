@@ -1185,7 +1185,8 @@ def show_napari(array, metadata,
     :param rename_sliders: name slider with correct labels output, defaults to False
     :type verbose: bool, optional
     :param use_BFdims: if True use the 5D dimension string from BioFormats or apeer-ometiff library
-    and if False use 6D dimension string from AICSImageIO, defaults to False
+    and if False use 6D dimension string from AICSImageIO.
+    Only use when the image is read via apeer-ometiff-library etc., defaults to False
     :type verbose: bool, optional
     """
 
@@ -1196,6 +1197,11 @@ def show_napari(array, metadata,
 
         # create scalefcator with all ones
         scalefactors = [1.0] * len(array.shape)
+
+        # extra check for czi to avoid user mistakes
+        if metadata['ImageType'] == 'czi':
+            use_BFdims = False
+
         if use_BFdims:
             # use the dimension string from BioFormats 5D
             dimpos = get_dimpositions(metadata['DimOrder BF Array'])

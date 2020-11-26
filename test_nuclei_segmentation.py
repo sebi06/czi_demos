@@ -16,10 +16,9 @@ import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-#from czitools import imgfileutils as imf
 import imgfileutils as imf
-from czitools import segmentation_tools as sgt
-from czitools import visutools as vst
+import segmentation_tools as sgt
+import visutools as vst
 from aicsimageio import AICSImage, imread
 from scipy import ndimage
 from skimage import measure, segmentation
@@ -50,9 +49,9 @@ verbose = False
 #filename = r"C:\Temp\input\WP96_4Pos_B4-10_DAPI.czi"
 # filename = r'c:\Temp\input\Translocation_comb_96_5ms.czi'
 # filename = r'C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Atomic\Nuclei\nuclei_RGB\H&E\Tumor_H&E_small2.czi'
-#filename = r"testdata/WP96_4Pos_B4-10_DAPI.czi"
+filename = r"testdata/WP96_4Pos_B4-10_DAPI.czi"
 #filename = r'testdata/WP96_2Pos_B2+B4_S=2_T=2_Z=4_C=3_X=512_Y=256.czi'
-filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Atomic\Nuclei\nuclei_RGB\H+E\Tumor_H+E_uncompressed_TSeries_cleaned.czi"
+#filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Atomic\Nuclei\nuclei_RGB\H+E\Tumor_H+E_uncompressed_TSeries_cleaned.czi"
 
 # create the savename for the OME-TIFF
 savename = filename.split('.')[0] + '.ome.tiff'
@@ -102,9 +101,9 @@ radius_dilation = 1
 
 # define segmentation method
 # use_method = 'scikit'
-# use_method = 'cellpose'
+use_method = 'cellpose'
 # use_method = 'zentf'
-use_method = 'stardist2d'
+# use_method = 'stardist2d'
 
 #######################################################
 
@@ -135,7 +134,6 @@ if use_method == 'stardist2d':
 # load the ML model from cellpose when needed
 if use_method == 'cellpose':
 
-    # model = sgt.load_cellpose_model(model_type='nuclei', device=sgt.set_device())
     model = sgt.load_cellpose_model(model_type='nuclei')
 
     # define list of channels for cellpose

@@ -124,3 +124,14 @@ dmypy.json
 # Pyre type checker
 .pyre/
 .vscode/settings.json
+testdata/96well-SingleFile-Scene-05-A5-A5.czi
+testdata/B4_B5_S=8_4Pos_perWell_T=2_Z=1_CH=1.czi
+testdata/CellDivision_T=10_Z=15_CH=2_DCV_small_CZI_MetaData.xml
+testdata/CellDivision_T=10_Z=15_CH=2_DCV_small_OMETIFF_MetaData.xml
+testdata/CellDivision_T=10_Z=15_CH=2_DCV_small_ZEN3.2.ome.tiff
+testdata/CellDivision_T=10_Z=15_CH=2_DCV_small.czi
+testdata/T=6_Z=15_CH=2.czi
+testdata/WP96_4Pos_B4-10_DAPI.ome.tiff
+testdata/WP96_4Pos_B4-10_DAPI.ome.tiff
+testdata/WP96_4Pos_B4-10_DAPI.ome.tiff
+testdata/WP96_4Pos_B4-10_DAPI.ome.tiff

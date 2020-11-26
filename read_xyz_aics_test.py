@@ -1,194 +1,82 @@
-from aicsimageio import AICSImage, imread, imread_dask
-import aicspylibczi
-import imgfileutils as imf
-import czi_tools as czt
+import os
 import itertools as it
-#import xmltodict
-#from lxml import etree
-from tqdm import tqdm
-#from collections import defaultdict
-import nested_dict as nd
-import pandas as pd
-import numpy as np
-from datetime import datetime
+from tqdm import tqdm, trange
+from tqdm.contrib.itertools import product
 import dateutil.parser as dt
+import matplotlib.pyplot as plt
+from matplotlib import cm, use
+import visutools as vt
+import czi_tools as czt
 
-"""
-def norm_columns(df, colname='Time [s]', mode='min'):
+# use specific plotting backend
+use('Qt5Agg')
 
-    # normalize columns according to min or max value
-    if mode == 'min':
-        min_value = df[colname].min()
-        df[colname] = df[colname] - min_value
+filepath = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Castor\testwell96.czi"
+#filepath = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Atomic\Nuclei\nuclei_RGB\H+E\Tumor_H+E.czi"
 
-    if mode == 'max':
-        max_value = df[colname].max()
-        df[colname] = df[colname] - max_value
+print('--------------------------------------------------')
+print('FilePath : ', filepath)
+print(os.getcwd())
+print('File exists : ', os.path.exists(filepath))
+print('--------------------------------------------------')
 
-    return df
-"""
+# define dimension indices
+S = 0
+T = 0
+Z = 0
+C = 0
 
-#filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Castor\testwell96.czi"
-filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Atomic\Nuclei\nuclei_RGB\H&E\Tumor_H&E.czi"
+# define the plot type and output type
+plot_type = 'html'
+separator = ','
 
-df = czt.get_czi_planetable(filename)
+# define plot parameters
+msz2d = 70
+msz3d = 10
+normz = False
 
-print(df[:8])
+if plot_type == 'mpl':
+    saveformat = 'png'
+if plot_type == 'html':
+    saveformat = 'html'
 
-"""
-czi = aicspylibczi.CziFile(filename)
+# define name for figure to be saved
+filename = os.path.basename(filepath)
+fig1savename = os.path.splitext(filename)[0] + '_XYZ-Pos' + '.' + saveformat
+fig2savename = os.path.splitext(filename)[0] + '_XYZ-Pos3D' + '.' + saveformat
 
-# Get the shape of the data
-dimensions = czi.dims  # 'STCZMYX'
+# get the planetable from CZI file
+planetable = czt.get_czi_planetable(filepath)
 
-czi_libczi_size = czi.size
+# filter the planetable for S, T, Z and C entry
+planetable_filtered = czt.filterplanetable(planetable, S=S, T=T, Z=Z, C=C)
 
-czi_libczi_shape = czi.dims_shape()
+if plot_type == 'mpl':
+    # display the XYZ positions using matplotlib
+    fig1, fig2 = vt.scatterplot_mpl(planetable_filtered,
+                                    S=S, T=T, Z=Z, C=C,
+                                    msz2d=msz2d,
+                                    normz=normz,
+                                    fig1savename=fig1savename,
+                                    fig2savename=fig2savename,
+                                    msz3d=msz3d)
 
-#print('dimensions_libczi : ', dimensions)
-#print('czi_libczi_size : ', czi_libczi_size)
-#print('czi_libczi_shape : ', czi_libczi_shape)
-# print('IsMosaic : ', czi.is_mosaic())  # True
+if plot_type == 'html':
+    # display the XYZ positions using plotly
+    fig1, fig2 = vt.scatterplot_plotly(planetable_filtered,
+                                       S=S, T=T, Z=Z, C=C,
+                                       msz2d=msz2d,
+                                       normz=normz,
+                                       fig1savename=fig1savename,
+                                       fig2savename=fig2savename,
+                                       msz3d=msz3d)
+    fig1.show()
+    fig2.show()
 
-try:
-    sizeM = czi_libczi_shape[0]['M'][1]
-except KeyError as e:
-    print('Key not found: ', e, 'Set SizeM = 1.')
-    sizeM = 1
+# write the planetable to a csv
+print('Write to CSV File : ', filename)
+csvfile = czt.save_planetable(planetable, filename,
+                              separator=separator,
+                              index=False)
 
-print(sizeM)
-
-md, add = imf.get_metadata(filename)
-
-print('SizeS : ', md['SizeS'])
-print('SizeM : ', md['SizeM'])
-print('SizeT : ', md['SizeT'])
-print('SizeZ : ', md['SizeZ'])
-print('SizeC : ', md['SizeC'])
-
-# tileinfo_dict = nd.nested_dict()
-sbcount = -1
-
-df = pd.DataFrame(columns=['Subblock',
-                           'Scene',
-                           'Tile',
-                           'T',
-                           'Z',
-                           'C',
-                           'X [micron]',
-                           'Y [micron]',
-                           'Z [micron]',
-                           'Time [s]',
-                           'xstart',
-                           'ystart',
-                           'xwidth',
-                           'ywidth'])
-
-pbar = tqdm(total=md['SizeS'] * md['SizeM'] * md['SizeT'] * md['SizeZ'] * md['SizeC'])
-
-if md['czi_ismosaic']:
-
-    for s, m, t, z, c in it.product(range(md['SizeS']),
-                                    range(md['SizeM']),
-                                    range(md['SizeT']),
-                                    range(md['SizeZ']),
-                                    range(md['SizeC'])):
-
-        sbcount += 1
-        # print(s, m, t, z, c)
-        info = czi.read_subblock_rect(S=s, M=m, T=t, Z=z, C=c)
-        # tileinfo_dict[s][m][t][z][c] = info
-
-        # read information from subblock
-        sb = czi.read_subblock_metadata(unified_xml=True, B=0, S=s, M=m, T=t, Z=z, C=c)
-
-        time = sb.xpath('//AcquisitionTime')[0].text
-        timestamp = dt.parse(time).timestamp()
-        # sb_exp = sb.xpath('//ExposureTime').text
-        # framesize = sb.xpath('//Frame')[0].text
-        xpos = np.double(sb.xpath('//StageXPosition')[0].text)
-        ypos = np.double(sb.xpath('//StageYPosition')[0].text)
-        zpos = np.double(sb.xpath('//FocusPosition')[0].text)
-
-        df = df.append({'Subblock': sbcount,
-                        'Scene': s,
-                        'Tile': m,
-                        'Time': t,
-                        'Z': z,
-                        'C': c,
-                        'X [micron]': xpos,
-                        'Y [micron]': ypos,
-                        'Z [micron]': zpos,
-                        'Time [s]': timestamp,
-                        'xstart': info[0],
-                        'ystart': info[1],
-                        'xwidth': info[2],
-                        'ywidth': info[3]},
-                       ignore_index=True)
-
-        pbar.update(1)
-
-pbar.close()
-
-if not md['czi_ismosaic']:
-
-    for s, t, z, c in it.product(range(md['SizeS']),
-                                 range(md['SizeT']),
-                                 range(md['SizeZ']),
-                                 range(md['SizeC'])):
-
-        sbcount += 1
-        # print(s, t, z, c)
-        info = czi.read_subblock_rect(S=s, T=t, Z=z, C=c)
-        # tileinfo_dict[s][t][z][c] = info
-
-        # read information from subblocks
-        sb = czi.read_subblock_metadata(unified_xml=True, B=0, S=s, T=t, Z=z, C=c)
-
-        time = sb.xpath('//AcquisitionTime')[0].text
-        timestamp = dt.parse(time).timestamp()
-        # sb_exp = sb.xpath('//ExposureTime').text
-        framesize = sb.xpath('//Frame')[0].text
-        xpos = np.double(sb.xpath('//StageXPosition')[0].text)
-        ypos = np.double(sb.xpath('//StageYPosition')[0].text)
-        zpos = np.double(sb.xpath('//FocusPosition')[0].text)
-
-        df = df.append({'Subblock': sbcount,
-                        'Scene': s,
-                        'Tile': 0,
-                        'T': t,
-                        'Z': z,
-                        'C': c,
-                        'X [micron]': xpos,
-                        'Y [micron]': ypos,
-                        'Z [micron]': zpos,
-                        'Time [s]': timestamp,
-                        'xstart': info[0],
-                        'ystart': info[1],
-                        'xwidth': info[2],
-                        'ywidth': info[3]},
-                       ignore_index=True)
-
-        pbar.update(1)
-
-pbar.close()
-
-print('Done.')
-
-df = imf.norm_columns(df, colname='Time [s]', mode='min')
-
-df = df.astype({'Subblock': 'int32',
-                'Scene': 'int32',
-                'Tile': 'int32',
-                'T': 'int32',
-                'Z': 'int32',
-                'C': 'int16',
-                'xstart': 'int32',
-                'xstart': 'int32',
-                'ystart': 'int32',
-                'xwidth': 'int32',
-                'ywidth': 'int32'}, copy=False)
-
-
-print(df[:8])
-"""
+plt.show()
