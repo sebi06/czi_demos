@@ -24,7 +24,8 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import matplotlib.patches as mpatches
 
-from czitools import imgfileutils as imf
+#from czitools import imgfileutils as imf
+import imgfileutils as imf
 
 from aicsimageio import AICSImage, imread
 
