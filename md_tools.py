@@ -2,9 +2,9 @@
 
 #################################################################
 # File        : md_tools.py
-# Version     : 0.0.1
+# Version     : 0.0.2
 # Author      : czsrh
-# Date        : 18.11.2020
+# Date        : 10.12.2020
 # Institution : Carl Zeiss Microscopy GmbH
 #
 # Copyright (c) 2020 Carl Zeiss AG, Germany. All Rights Reserved.
@@ -316,7 +316,8 @@ def checkmdscale_none(md, tocheck=['ZScale'], replace=[1.0]):
 def get_metadata_czi(filename, dim2none=False,
                      forceDim=False,
                      forceDimname='SizeC',
-                     forceDimvalue=2):
+                     forceDimvalue=2,
+                     convert_scunit=True):
     """
     Returns a dictionary with CZI metadata.
 
@@ -339,6 +340,14 @@ def get_metadata_czi(filename, dim2none=False,
     :type filename: str
     :param dim2none: option to set non-existing dimension to None, defaults to False
     :type dim2none: bool, optional
+    :param forceDim: option to force to not read certain dimensions, defaults to False
+    :type forceDim: bool, optional
+    :param forceDimname: name of the dimension not to read, defaults to SizeC
+    :type forceDimname: str, optional
+    :param forceDimvalue: index of the dimension not to read, defaults to 2
+    :type forceDimvalue: int, optional      
+    :param convert_scunit: convert scale unit string from 'µm' to 'micron', defaults to False
+    :type convert_scunit: bool, optional  
     :return: metadata - dictionary with the relevant CZI metainformation
     :rtype: dict
     """
@@ -951,6 +960,15 @@ def get_metadata_czi(filename, dim2none=False,
 
     # close AICSImage object
     czi_aics.close()
+
+    # convert scale unit tom avoid encoding problems
+    if convert_scunit:
+        if metadata['XScaleUnit'] == 'µm':
+            metadata['XScaleUnit'] = 'micron'
+        if metadata['YScaleUnit'] == 'µm':
+            metadata['YScaleUnit'] = 'micron'
+        if metadata['ZScaleUnit'] == 'µm':
+            metadata['ZScaleUnit'] = 'micron'
 
     return metadata
 

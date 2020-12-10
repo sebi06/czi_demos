@@ -2,9 +2,9 @@
 
 #################################################################
 # File        : segmentation_tools.py
-# Version     : 0.3
+# Version     : 0.4
 # Author      : czsrh
-# Date        : 24.11.2020
+# Date        : 10.12.2020
 # Institution : Carl Zeiss Microscopy GmbH
 #
 # Copyright (c) 2020 Carl Zeiss AG, Germany. All Rights Reserved.
@@ -462,6 +462,7 @@ def load_cellpose_model(model_type='nuclei',
     # load cellpose model for cell nuclei using GPU or CPU
     print('Loading Cellpose Model ...')
 
+    """
     # try to get the device
     try:
         device = set_device()
@@ -480,6 +481,11 @@ def load_cellpose_model(model_type='nuclei',
                                 net_avg=net_avg,
                                 device=device
                                 )
+    """
+
+    model = models.Cellpose(gpu=True,
+                            model_type='nuclei',
+                            net_avg=net_avg)
 
     return model
 

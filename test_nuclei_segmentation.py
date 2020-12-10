@@ -416,10 +416,13 @@ with tifffile.TiffWriter(savename, append=False) as tif:
                  metadata={'axes': dimstring5d,
                            'PhysicalSizeX': np.round(md['XScale'], 3),
                            'PhysicalSizeXUnit': md['XScaleUnit'],
+                           # 'PhysicalSizeXUnit': 'micron',
                            'PhysicalSizeY': np.round(md['YScale'], 3),
                            'PhysicalSizeYUnit': md['YScaleUnit'],
+                           # 'PhysicalSizeYUnit': 'micron',
                            'PhysicalSizeZ': np.round(md['ZScale'], 3),
                            'PhysicalSizeZUnit': md['ZScaleUnit']
+                           # 'PhysicalSizeZUnit': 'micron'
                            }
                  )
     # close the AICSImage object at the end
