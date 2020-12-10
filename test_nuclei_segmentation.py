@@ -49,7 +49,8 @@ verbose = False
 #filename = r"C:\Temp\input\WP96_4Pos_B4-10_DAPI.czi"
 # filename = r'c:\Temp\input\Translocation_comb_96_5ms.czi'
 # filename = r'C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Atomic\Nuclei\nuclei_RGB\H&E\Tumor_H&E_small2.czi'
-filename = r"testdata/WP96_4Pos_B4-10_DAPI.czi"
+#filename = r"testdata/WP96_4Pos_B4-10_DAPI.czi"
+filename = r"testdata/segment_nuclei_CNN.czi"
 #filename = r'testdata/WP96_2Pos_B2+B4_S=2_T=2_Z=4_C=3_X=512_Y=256.czi'
 #filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Atomic\Nuclei\nuclei_RGB\H+E\Tumor_H+E_uncompressed_TSeries_cleaned.czi"
 
