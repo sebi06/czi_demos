@@ -32,14 +32,15 @@ from aicsimageio import AICSImage, imread
 from skimage import io, measure, segmentation
 from skimage import exposure
 from skimage.exposure import rescale_intensity
-from skimage.morphology import watershed, dilation
 from skimage.morphology import white_tophat, black_tophat, disk, square, ball, closing, square
-from skimage.morphology import remove_small_objects, remove_small_holes
+from skimage.morphology import remove_small_objects, remove_small_holes, dilation
 from skimage.feature import peak_local_max
 from skimage.measure import label, regionprops
 from skimage.filters import threshold_otsu, threshold_triangle, rank, median, gaussian
 from skimage.segmentation import clear_border
 from skimage.segmentation import random_walker
+#from skimage.morphology import watershed
+from skimage.segmentation import watershed
 from skimage.color import label2rgb
 from skimage.util import invert
 

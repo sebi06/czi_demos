@@ -82,7 +82,7 @@ cols = ['S', 'T', 'Z', 'C', 'Number']
 objects = pd.DataFrame(columns=cols)
 
 # optional dipslay of "some" results - empty list = no display
-show_image = [0]
+show_image = []
 
 # toggle additional printed output
 verbose = True
@@ -102,8 +102,8 @@ radius_dilation = 1
 
 # define segmentation method
 # use_method = 'scikit'
-use_method = 'cellpose'
-# use_method = 'zentf'
+# use_method = 'cellpose'
+use_method = 'zentf'
 # use_method = 'stardist2d'
 
 #######################################################
@@ -140,7 +140,7 @@ if use_method == 'cellpose':
     # define list of channels for cellpose
     # channels = SizeS * SizeT * SizeZ * [0, 0]
     channels = [0, 0]  # when applying it to a single image
-    diameter = 30
+    diameter = 50
 
 # define model path and load TF2 model when needed
 if use_method == 'zentf':
@@ -160,7 +160,7 @@ startp = perf_counter()
 readtime_allscenes = 0
 
 # set number of Scenes for testing
-md['SizeS'] = 5
+#md['SizeS'] = 5
 
 # get AICSImageIO object using the python wrapper for libCZI (if file is CZI)
 img = AICSImage(filename)
