@@ -32,7 +32,7 @@ from IPython.display import display, HTML
 from MightyMosaic import MightyMosaic
 
 # specify the filename of the CZI file
-filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Atomic\Nuclei\nuclei_RGB\H&E\Tumor_H&E_small2.czi"
+filename = r"C:\Temp\input\DTScan_ID4.czi"
 # get the metadata from the czi file
 md, addmd = imf.get_metadata(filename)
 
@@ -56,6 +56,9 @@ print('SizeY (aicsimageio) : ', md['SizeY_aics'])
 print('XScale : ', md['XScale'])
 print('Yscale : ', md['YScale'])
 print('Zscale : ', md['ZScale'])
+
+
+mosaic_data, md = imf.readczi_tiles(filename, md, scale_factor=1.0)
 
 
 ####################
