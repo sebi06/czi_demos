@@ -3,7 +3,7 @@ import imgfileutils as imf
 import czi_tools as czt
 
 #filename = r"input\Tumor_H+E_small2.czi"
-filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\W96_B2+B4_S=2_T=2=Z=4_C=3_Tile=5x9.czi"
+filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\W96_B2+B4_S=2_T=1=Z=1_C=1_Tile=5x9.czi"
 
 # get the metadata from the czi file
 md, additional_mdczi = imf.get_metadata(filename)
@@ -56,12 +56,16 @@ YMIN = min(ymin)
 XMAX = max(xmax)
 YMAX = max(ymax)
 
-out = czt.get_scene_extend_czi(czi, sceneindex=0)
-print(out)
+#out = czt.get_scene_extend_czi(czi, sceneindex=0)
+# print(out)
 size = czi.read_mosaic_size()
-print(size)
+print('Total Size of Moasic: ', size)
 
 # read sizes for all scenes
 for s in range(md['SizeS']):
     out = czt.get_scene_extend_czi(czi, sceneindex=s)
     print('BBox Scene:', s, ' : ', out)
+
+    # read the specif part of the CZI
+    region = czi.read_mosaic(region=out, scale_factor=1.0)
+    print(region.shape)
