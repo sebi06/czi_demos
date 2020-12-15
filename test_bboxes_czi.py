@@ -1,71 +1,76 @@
 from aicspylibczi import CziFile
 import imgfileutils as imf
 import czi_tools as czt
+import matplotlib.pyplot as plt
+import numpy as np
 
-#filename = r"input\Tumor_H+E_small2.czi"
-filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\W96_B2+B4_S=2_T=1=Z=1_C=1_Tile=5x9.czi"
+# filename = r"testdata\Tumor_H+E_small2.czi"
+filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\Well_B2-4_S=4_T=1_Z=1_C=1.czi"
+# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\W96_B2+B4_S=2_T=1=Z=1_C=1_Tile=5x9.czi"
+# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\W96_B2+B4_S=2_T=2=Z=4_C=3_Tile=5x9.czi"
+# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Castor\Z-Stack_DCV\CellDivision_T=10_Z=15_CH=2_DCV_small.czi"
+# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Castor\Mouse Kidney_40x0.95_3CD_JK_comp.czi"
+# filename = r"C:\Temp\input\DTScan_ID4.czi"
+# filename = r"C:\Temp\input\OverViewScan_8Brains.czi"
 
 # get the metadata from the czi file
 md, additional_mdczi = imf.get_metadata(filename)
 
 # read CZI using aicslibczi
-czi = CziFile(filename)
+cziobject = CziFile(filename)
+size = cziobject.read_mosaic_size()
 
-# get the bounding boxes
-bboxes = czi.mosaic_scene_bounding_boxes(index=0)
+dimsizes = imf.getdims_pylibczi(cziobject)
 
-#xmin = 0
-#ymin = 0
-#xmax = 0
-#ymax = 0
-"""
-for b in range(len(bboxes)):
-    box = bboxes[b]
-    # check first bbox
-    # if box[0] < box[0]:
-    if box[0] < xmin:
-        xmin = box[0]
 
-    if box[1] < ymin:
-        ymin = box[1]
+print('Mosaic Size: ', size)
+print('-----------------------------------------------------')
 
-    if box[0] + box[2] > xmax:
-        xmax = box[0] + box[2]
+# define channel to read
+ch = 0
+t = 0
+z = 0
+scalefactor = 0.5
 
-    if box[1] + box[3] > ymax:
-        ymax = box[1] + box[3]
+# create figure later plotting
+fig, ax = plt.subplots(1, 4, figsize=(16, 6))
 
-print(xmin, ymin, xmax, ymax)
-"""
-
-xmin = []
-ymin = []
-xmax = []
-ymax = []
-
-for b in range(len(bboxes)):
-    # get the bounding box for a tile
-    box = bboxes[b]
-    xmin.append(box[0])
-    ymin.append(box[1])
-    xmax.append(box[0] + box[2])
-    ymax.append(box[1] + box[3])
-
-XMIN = min(xmin)
-YMIN = min(ymin)
-XMAX = max(xmax)
-YMAX = max(ymax)
-
-#out = czt.get_scene_extend_czi(czi, sceneindex=0)
-# print(out)
-size = czi.read_mosaic_size()
-print('Total Size of Moasic: ', size)
 
 # read sizes for all scenes
 for s in range(md['SizeS']):
-    out = czt.get_scene_extend_czi(czi, sceneindex=s)
-    print('BBox Scene:', s, ' : ', out)
 
-    # read the specif part of the CZI
-    region = czi.read_mosaic(region=out, scale_factor=1.0)
-    print(region.shape)
+    """
+    # get bbox for the specific scene
+    xmin, ymin, width, height = czt.get_bbox_scene(cziobject, sceneindex=s)
+
+    # read the specific part of the CZI
+    scene = cziobject.read_mosaic(region=(xmin, ymin, width, height),
+                                   scale_factor=scalefactor,
+                                   T=t,
+                                   Z=z,
+                                   C=ch)
+    """
+
+    # get the
+    scene, bbox, md = czt.read_scene_bbox(cziobject, md,
+                                          sceneindex=s,
+                                          channel=ch,
+                                          timepoint=t,
+                                          zplane=z,
+                                          scalefactor=scalefactor)
+
+    print('Scene Shape : ', s, bbox[0], bbox[1], bbox[2], bbox[3])
+    print('BBox Scene  : ', s, scene.shape)
+    print('-----------------------------------------------------')
+
+    ax[s].imshow(np.squeeze(scene),
+                 cmap=plt.cm.gray,
+                 interpolation='nearest',
+                 clim=[scene.min(), scene.max() * 0.5])
+
+    #ax[s].set_title('Scene : ' + str(s), fontsize=12)
+    ax[s].set_title('BBox Scene: ' + str(s) + str(np.squeeze(scene).shape), fontsize=12)
+
+del cziobject
+
+plt.show()
