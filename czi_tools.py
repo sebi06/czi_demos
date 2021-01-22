@@ -2,12 +2,12 @@
 
 #################################################################
 # File        : czi_tools.py
-# Version     : 0.0.4
+# Version     : 0.0.5
 # Author      : czsrh
-# Date        : 15.12.2020
+# Date        : 22.01.2021
 # Institution : Carl Zeiss Microscopy GmbH
 #
-# Copyright (c) 2020 Carl Zeiss AG, Germany. All Rights Reserved.
+# Copyright (c) 2021 Carl Zeiss AG, Germany. All Rights Reserved.
 #################################################################
 
 import os
