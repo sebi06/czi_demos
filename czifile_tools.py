@@ -13,7 +13,7 @@
 import os
 from aicsimageio import AICSImage, imread, imread_dask
 import aicspylibczi
-import imgfileutils as imf
+import imgfile_tools as imf
 import itertools as it
 from tqdm import tqdm, trange
 from tqdm.contrib.itertools import product
@@ -339,7 +339,7 @@ def read_scene_bbox(cziobject, metadata,
     # check if CZI has T or Z dimension
     if 'T' in metadata['dims_aicspylibczi']:
         hasT = True
-    if 'T' in metadata['dims_aicspylibczi']:
+    if 'Z' in metadata['dims_aicspylibczi']:
         hasZ = True
 
     # get the bounding box for the specified scene
@@ -376,3 +376,54 @@ def read_scene_bbox(cziobject, metadata,
     metadata['YScale Pyramid'] = metadata['YScale'] * 1 / scalefactor
 
     return scene, (xmin, ymin, width, height), metadata
+
+
+def getbboxes_allscenes(czi, numscenes=1):
+
+    all_bboxes = []
+    for s in range(numscenes):
+        sc = CZIScene(czi, sceneindex=s)
+        all_bboxes.append(sc)
+
+    return all_bboxes
+
+
+class CZIScene:
+    def __init__(self, czi, sceneindex):
+
+        x, y, w, h = get_bbox_scene(czi, sceneindex)
+        self.xstart = x
+        self.ystart = y
+        self.width = w
+        self.height = h
+        self.sceneid = sceneindex
+
+
+def get_scene_arraydims(czi, md):
+
+    scene_sizes = []
+
+    # loop over all scenes
+    for s in range(md['SizeS']):
+
+        scene = CZIScene(czi, sceneindex=s)
+        array_shape_list = []
+        posdict = {'S': 'SizeS', 'T': 'SizeT', 'C': 'SizeC', 'Z': 'SizeZ'}
+
+        # find key based upon value
+        for v in range(4):
+            # get the corresponding dim_id, e.g. 'S'
+            dim_id = imf.get_key(md['dimpos_aics'], v)
+            # get the correspong string to access the size of tht dimension
+            dimstr = posdict[dim_id]
+            # append size for this dimension to list containing the shape
+            array_shape_list.append(md[dimstr])
+
+        # add width and height of scene to the required shape list
+        array_shape_list.append(scene.height)
+        array_shape_list.append(scene.width)
+
+        print('Adding shape for scene: ', s)
+        scene_sizes.append(array_shape_list)
+
+    return scene_sizes
