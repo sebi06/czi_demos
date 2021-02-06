@@ -11,7 +11,8 @@ import napari
 
 # filename = r"C:\Temp\input\DTScan_ID4.czi"
 #filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\S=1_3x3_T=1_Z=1_CH=2.czi"
-filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\S=2_3x3_T=1_Z=1_CH=2.czi"
+#filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\S=2_3x3_T=1_Z=1_CH=2.czi"
+filename = r"/datadisk1/tuxedo/testpictures/Testdata_Zeiss/CZI_Testfiles/S=2_3x3_T=1_Z=1_CH=2.czi"
 # filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\S=2_3x3_T=1_Z=4_CH=2.czi"
 # filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\S=2_3x3_T=3_Z=1_CH=2.czi"
 # filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\S=1_3x3_T=3_Z=4_CH=2.czi"
@@ -62,9 +63,12 @@ for v in range(4):
 array_shape_list.append(scene1.height)
 array_shape_list.append(scene1.width)
 """
-array_shape_list = czt.get_scene_arraydims(czi, md)
 
-print(' Required_Array Shape : ', array_shape_list)
+# get the required shape for all and singel scenes
+shape_all, shape_single, same_shape = czt.get_scene_arraydims(czi, md)
+print(' Required_Array Shape for all scenes: ', shape_all)
+for sh in shape_single:
+    print('Required Array Shape for single scenes: ', sh)
 
 
 # define array to store all channels
@@ -72,10 +76,10 @@ print(' Required_Array Shape : ', array_shape_list)
 #                          dtype = md['NumPy.dtype'],
 #                          chunks = True)
 
-scene_array = np.empty(array_shape_list, dtype=md['NumPy.dtype'])
+scene_array = np.empty(shape_all, dtype=md['NumPy.dtype'])
 
 # loop over all scenes
-for s in range(md['Sizes']):
+for s in range(md['SizeS']):
 
     # get the CZIscene for the current scene
     scene = czt.CZIScene(czi, sceneindex=s)
@@ -89,12 +93,12 @@ for s in range(md['Sizes']):
                                 scale_factor=1.0,
                                 C=ch)
         # insert the slice at the corrent index
-        if posC == 1:
-            scene_array[0, ch, 0, 0, :, :] = np.squeeze(slice)
-        if posC == 2:
-            scene_array[0, 0, ch, 0, :, :] = np.squeeze(slice)
-        if posC == 3:
-            scene_array[0, 0, 0, ch, :, :] = np.squeeze(slice)
+        if md['dimpos_aics']['C'] == 1:
+            scene_array[s, ch, 0, 0, :, :] = np.squeeze(slice)
+        if md['dimpos_aics']['C'] == 2:
+            scene_array[s, 0, ch, 0, :, :] = np.squeeze(slice)
+        if md['dimpos_aics']['C'] == 3:
+            scene_array[s, 0, 0, ch, :, :] = np.squeeze(slice)
 
 
 print(scene_array.shape)

@@ -17,7 +17,7 @@ import imgfile_tools as imf
 import itertools as it
 from tqdm import tqdm, trange
 from tqdm.contrib.itertools import product
-import nested_dict as nd
+#import nested_dict as nd
 import pandas as pd
 import numpy as np
 from datetime import datetime
@@ -401,17 +401,18 @@ class CZIScene:
 
 def get_scene_arraydims(czi, md):
 
-    scene_sizes = []
+    array_size_single_scenes = []
 
     # loop over all scenes
     for s in range(md['SizeS']):
 
         scene = CZIScene(czi, sceneindex=s)
-        array_shape_list = []
+        array_shape_list = [1]
         posdict = {'S': 'SizeS', 'T': 'SizeT', 'C': 'SizeC', 'Z': 'SizeZ'}
+        #posdict = {'T': 'SizeT', 'C': 'SizeC', 'Z': 'SizeZ'}
 
         # find key based upon value
-        for v in range(4):
+        for v in range(1, 4):
             # get the corresponding dim_id, e.g. 'S'
             dim_id = imf.get_key(md['dimpos_aics'], v)
             # get the correspong string to access the size of tht dimension
@@ -424,6 +425,15 @@ def get_scene_arraydims(czi, md):
         array_shape_list.append(scene.width)
 
         print('Adding shape for scene: ', s)
-        scene_sizes.append(array_shape_list)
+        array_size_single_scenes.append(array_shape_list)
 
-    return scene_sizes
+    # check if all calculated scene sizes have the same shape
+    same_shape = all(elem == array_size_single_scenes[0] for elem in array_size_single_scenes)
+
+    # create required array shape in case all scenes are equal
+    array_size_all_scenes = None
+    if same_shape:
+        array_size_all_scenes = array_size_single_scenes[0].copy()
+        array_size_all_scenes[md['dimpos_aics']['S']] = md['SizeS']
+
+    return array_size_all_scenes, array_size_single_scenes, same_shape
