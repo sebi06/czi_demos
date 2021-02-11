@@ -2,9 +2,9 @@
 
 #################################################################
 # File        : imgfileutils.py
-# Version     : 1.4.9
+# Version     : 1.5.0
 # Author      : czsrh
-# Date        : 02.02.2021
+# Date        : 09.02.2021
 # Institution : Carl Zeiss Microscopy GmbH
 #
 # Disclaimer: This tool is purely experimental. Feel free to
@@ -31,6 +31,7 @@ import dask.array as da
 import pandas as pd
 import tifffile
 import pydash
+import zarr
 
 try:
     import napari
@@ -122,8 +123,8 @@ def create_metadata_dict():
                 'Sizes BF': None,
                 'DimOrder BF': None,
                 'DimOrder BF Array': None,
-                'Axes_czifile': None,
-                'Shape_czifile': None,
+                'axes_czifile': None,
+                'shape_czifile': None,
                 'czi_isRGB': False,
                 'czi_isMosaic': False,
                 'ObjNA': [],
@@ -402,8 +403,8 @@ def get_metadata_czi(filename, dim2none=False,
     metadata['ImageType'] = 'czi'
 
     # add axes and shape information using czifile package
-    metadata['Axes_czifile'] = czi.axes
-    metadata['Shape_czifile'] = czi.shape
+    metadata['axes_czifile'] = czi.axes
+    metadata['shape_czifile'] = czi.shape
 
     # add axes and shape information using aicsimageio package
     czi_aics = AICSImage(filename)
@@ -430,12 +431,12 @@ def get_metadata_czi(filename, dim2none=False,
     # Get the shape of the data, the coordinate pairs are (start index, size)
     aics_czi = CziFile(filename)
     metadata['dims_aicspylibczi'] = aics_czi.dims_shape()[0]
-    metadata['dimorder_aicspylibczi'] = aics_czi.dims
+    metadata['axes_aicspylibczi'] = aics_czi.dims
     metadata['size_aicspylibczi'] = aics_czi.size
     metadata['czi_isMosaic'] = aics_czi.is_mosaic()
     print('CZI is Mosaic :', metadata['czi_isMosaic'])
 
-    # get positions of dimesions
+    # get positions of dimensions
     try:
         metadata['dimpos_aics'] = get_dimpositions(metadata['Axes_aics'])
     except KeyError:
@@ -665,6 +666,15 @@ def get_metadata_czi(filename, dim2none=False,
             # set to isotropic scaling if it was single plane only
             metadata['ZScale'] = metadata['XScale']
             metadata['ZScaleUnit'] = metadata['XScaleUnit']
+
+    # convert scale unit to avoid encoding problems
+    if convert_scunit:
+        if metadata['XScaleUnit'] == 'µm':
+            metadata['XScaleUnit'] = 'micron'
+        if metadata['YScaleUnit'] == 'µm':
+            metadata['YScaleUnit'] = 'micron'
+        if metadata['ZScaleUnit'] == 'µm':
+            metadata['ZScaleUnit'] = 'micron'
 
     # try to get software version
     try:
@@ -1014,7 +1024,7 @@ def get_metadata_czi(filename, dim2none=False,
     # get the dimensions of the bounding boxes for the scenes
     # acces CZI image using aicslibczi
     cziobject = CziFile(filename)
-    metadata['BBoxes_Scenes'] = czt.getbboxes_allscenes(cziobject,
+    metadata['BBoxes_Scenes'] = czt.getbboxes_allscenes(cziobject, metadata,
                                                         numscenes=metadata['SizeS'])
 
     # close CZI file
@@ -1022,15 +1032,6 @@ def get_metadata_czi(filename, dim2none=False,
 
     # close AICSImage object
     czi_aics.close()
-
-    # convert scale unit tom avoid encoding problems
-    if convert_scunit:
-        if metadata['XScaleUnit'] == 'µm':
-            metadata['XScaleUnit'] = 'micron'
-        if metadata['YScaleUnit'] == 'µm':
-            metadata['YScaleUnit'] = 'micron'
-        if metadata['ZScaleUnit'] == 'µm':
-            metadata['ZScaleUnit'] = 'micron'
 
     return metadata
 
@@ -1346,15 +1347,21 @@ def show_napari(viewer, array, metadata,
                 chname = 'CH' + str(ch + 1)
 
             # cut out channel
+            channel = slicedimC(array, ch, dimpos['C'])
             # use dask if array is a dask.array
+            """
             if isinstance(array, da.Array):
                 print('Extract Channel as Dask.Array')
-                channel = array.compute().take(ch, axis=dimpos['C'])
-
-            else:
+                channel = slicedimC(array, ch, dimpos['C'])
+                #channel = array.compute().take(ch, axis=dimpos['C'])
+            if isinstance(array, zarr.Array):
+                print('Extract Channel as Dask.Array')
+                channel = slicedimC(array, ch, dimpos['C'])
+            if isinstance(array, np.ndarray):
                 # use normal numpy if not
                 print('Extract Channel as NumPy.Array')
                 channel = array.take(ch, axis=dimpos['C'])
+            """
 
             # actually show the image array
             print('Adding Channel  :', chname)
@@ -1398,7 +1405,11 @@ def show_napari(viewer, array, metadata,
             array = array.compute()
 
         # get min-max values for initial scaling
-        clim = calc_scaling(array)
+        clim = calc_scaling(channel,
+                            corr_min=1.0,
+                            offset_min=0,
+                            corr_max=0.85,
+                            offset_max=0)
 
         # add layer to Napari viewer
         new_layer = viewer.add_image(array,
@@ -2107,3 +2118,17 @@ def get_key(my_dict, val):
             return key
 
     return None
+
+
+def slicedimC(array, dimindex, posdim):
+
+    if posdim == 0:
+        array_sliced = array[dimindex:dimindex + 1, :, :, :, :, :]
+    if posdim == 1:
+        array_sliced = array[:, dimindex:dimindex + 1, :, :, :, :]
+    if posdim == 2:
+        array_sliced = array[:, :, dimindex:dimindex + 1, :, :, :]
+    if posdim == 3:
+        array_sliced = array[:, :, :, dimindex:dimindex + 1, :, :]
+
+    return array_sliced

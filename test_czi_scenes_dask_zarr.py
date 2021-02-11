@@ -9,14 +9,30 @@ from dask import delayed
 from itertools import product
 import napari
 
-# filename = r"C:\Temp\input\DTScan_ID4.czi"
-#filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\S=1_3x3_T=1_Z=1_CH=2.czi"
-#filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\S=2_3x3_T=1_Z=1_CH=2.czi"
-filename = r"/datadisk1/tuxedo/testpictures/Testdata_Zeiss/CZI_Testfiles/S=2_3x3_T=1_Z=1_CH=2.czi"
+# filename = r"testdata\Tumor_H+E_small2.czi"
+# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\Well_B2-4_S=4_T=1_Z=1_C=1.czi"
+# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\W96_B2+B4_S=2_T=1=Z=1_C=1_Tile=5x9.czi"
+# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\W96_B2+B4_S=2_T=2=Z=4_C=3_Tile=5x9.czi"
+# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Castor\Z-Stack_DCV\CellDivision_T=10_Z=15_CH=2_DCV_small.czi"
+# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Castor\Mouse Kidney_40x0.95_3CD_JK_comp.czi"
+# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\S=1_3x3_T=1_Z=1_CH=2.czi"
+# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\S=2_3x3_T=1_Z=1_CH=2.czi"
+# filename = r"/datadisk1/tuxedo/testpictures/Testdata_Zeiss/CZI_Testfiles/S=2_3x3_T=1_Z=1_CH=2.czi"
 # filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\S=2_3x3_T=1_Z=4_CH=2.czi"
 # filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\S=2_3x3_T=3_Z=1_CH=2.czi"
 # filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\S=1_3x3_T=3_Z=4_CH=2.czi"
 # filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\S=2_3x3_T=3_Z=4_CH=2.czi"
+# filename = r"C:\Temp\input\DTScan_ID4_small.czi"
+filename = r"C:\Temp\input\DTScan_ID4.czi"
+# filename = r"C:\Temp\input\OverViewScan_8Brains.czi"
+# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Castor\testwell96.czi"
+# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\Multiscene_CZI_3Scenes.czi"
+# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\S=2_3x3_T=3_CH=2.czi"
+# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\S=2_3x3_CH=2.czi"
+# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\S=2_3x3_Z=4_CH=2.czi"
+# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\Z=4_CH=2.czi"
+# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\T=3_Z=4_CH=2.czi"
+# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\T=3_CH=2.czi"
 
 ######################################################################
 
@@ -34,75 +50,67 @@ if 'Z' in md['dims_aicspylibczi']:
 # read CZI using aicslibczi
 czi = CziFile(filename)
 
-"""
-# read info for 1st scene
-sid = 0
-scene1 = czt.CZIScene(czi, sceneindex=sid)
 
-# array_shape = (1, 1, 1, md['SizeC'], s.height, s.width)
-dimpos = md['dimpos_aics']
-posS = dimpos['S']
-posT = dimpos['T']
-posZ = dimpos['Z']
-posC = dimpos['C']
-
-array_shape_list = []
-posdict = {'S': 'SizeS', 'T': 'SizeT', 'C': 'SizeC', 'Z': 'SizeZ'}
-
-# find key based upon value
-kk = []
-for v in range(4):
-    # get the corresponding dim_id, e.g. 'S'
-    dim_id = imf.get_key(dimpos, v)
-    # get the correspong string to access the size of tht dimension
-    dimstr = posdict[dim_id]
-    # append size for this dimension to list containing the shape
-    array_shape_list.append(md[dimstr])
-
-# add width and height of scene to the required shape list
-array_shape_list.append(scene1.height)
-array_shape_list.append(scene1.width)
-"""
-
-# get the required shape for all and singel scenes
-shape_all, shape_single, same_shape = czt.get_scene_arraydims(czi, md)
-print(' Required_Array Shape for all scenes: ', shape_all)
+# get the required shape for all and single scenes
+shape_all, shape_single, same_shape = czt.get_shape_allscenes(czi, md)
+print('Required_Array Shape for all scenes: ', shape_all)
 for sh in shape_single:
     print('Required Array Shape for single scenes: ', sh)
 
 
-# define array to store all channels
-# scene_array = zarr.create(tuple(array_shape_list),
-#                          dtype = md['NumPy.dtype'],
-#                          chunks = True)
+#array_type = 'dask'
+array_type = 'zarr'
+#array_type = 'numpy'
 
-scene_array = np.empty(shape_all, dtype=md['NumPy.dtype'])
+if array_type == 'zarr':
 
-# loop over all scenes
-for s in range(md['SizeS']):
+    # define array to store all channels
+    all_scenes_array = zarr.create(tuple(shape_all),
+                                   dtype=md['NumPy.dtype'],
+                                   chunks=True)
 
-    # get the CZIscene for the current scene
-    scene = czt.CZIScene(czi, sceneindex=s)
-
-    for ch in range(md['SizeC']):
-        print('Reading Mosaic for Channel:', ch)
-        slice = czi.read_mosaic(region=(scene.xstart,
-                                        scene.ystart,
-                                        scene.width,
-                                        scene.height),
-                                scale_factor=1.0,
-                                C=ch)
-        # insert the slice at the corrent index
-        if md['dimpos_aics']['C'] == 1:
-            scene_array[s, ch, 0, 0, :, :] = np.squeeze(slice)
-        if md['dimpos_aics']['C'] == 2:
-            scene_array[s, 0, ch, 0, :, :] = np.squeeze(slice)
-        if md['dimpos_aics']['C'] == 3:
-            scene_array[s, 0, 0, ch, :, :] = np.squeeze(slice)
+if array_type == 'numpy':
+    all_scenes_array = np.empty(shape_all, dtype=md['NumPy.dtype'])
 
 
-print(scene_array.shape)
+if array_type == 'zarr' or array_type == 'numpy':
 
+    # loop over all scenes
+    for s in range(md['SizeS']):
+        # get the CZIscene for the current scene
+        single_scene = czt.CZIScene(czi, md, sceneindex=s)
+        out = czt.read_czi_scene(czi, single_scene, md)
+        all_scenes_array[s, :, :, :, :, :] = np.squeeze(out, axis=0)
+
+    print(all_scenes_array.shape)
+
+
+elif array_type == 'dask':
+
+    def dask_load_sceneimage(czi, s, md):
+
+        # get the CZIscene for the current scene
+        single_scene = czt.CZIScene(czi, md, sceneindex=s)
+        out = czt.read_czi_scene(czi, single_scene, md)
+        return out
+
+    sp = shape_all[1:]
+
+    # create dask stack of lazy image readers
+    lazy_process_image = dask.delayed(dask_load_sceneimage)  # lazy reader
+
+    lazy_arrays = [lazy_process_image(czi, s, md) for s in range(md['SizeS'])]
+
+    dask_arrays = [
+        da.from_delayed(lazy_array, shape=sp, dtype=md['NumPy.dtype'])
+        for lazy_array in lazy_arrays
+    ]
+    # Stack into one large dask.array
+    all_scenes_array = da.stack(dask_arrays, axis=0)
+    print(all_scenes_array.shape)
+
+
+# show array inside napari viewer
 with napari.gui_qt():
     # specify contrast_limits and is_pyramid=False with big data
     # to avoid unnecessary computations
@@ -110,55 +118,8 @@ with napari.gui_qt():
 
     viewer = napari.Viewer()
 
-    layers = imf.show_napari(viewer, scene_array, md,
+    layers = imf.show_napari(viewer, all_scenes_array, md,
                              blending='additive',
                              gamma=0.85,
                              add_mdtable=True,
                              rename_sliders=True)
-
-###########################################################
-
-"""
-def load_image(czi, md, ch=0):
-
-    # get the array for a specifc scene, the BBox and the updated metadata
-    scene, bbox, md = czt.read_scene_bbox(czi, md,
-                                          sceneindex=s,
-                                          channel=ch,
-                                          timepoint=t,
-                                          zplane=z,
-                                          scalefactor=1.0)
-    print('Reading one scene')
-
-    return scene
-
-
-width = md['BBoxes_Scenes'][0].width
-height = md['BBoxes_Scenes'][0].height
-
-print(md['SizeS'], md['SizeT'], md['SizeZ'], md['SizeC'], height, width)
-sp = [md['SizeT'], md['SizeZ'], md['SizeC'], height, width]
-
-# z = zarr.create(sp)
-# print(z.shape)
-
-# create dask stack of lazy image readers
-lazy_process_image = dask.delayed(load_image)  # lazy reader
-
-lazy_arrays = [lazy_process_image(cziobject, md, s=s, t=t, z=z, ch=ch)
-               for s, t, z, ch in product(range(md['SizeS']),
-                                          range(md['SizeT']),
-                                          range(md['SizeZ']),
-                                          range(md['SizeC']))
-               ]
-
-dask_arrays = [da.from_delayed(lazy_array,
-                               shape=sp,
-                               dtype=md['NumPy.dtype'])
-               for lazy_array in lazy_arrays
-               ]
-
-# Stack into one large dask.array
-dask_stack = da.stack(dask_arrays, axis=0)
-print(dask_stack.shape)
-"""
