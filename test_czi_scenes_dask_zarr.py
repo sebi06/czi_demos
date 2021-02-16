@@ -22,9 +22,15 @@ import napari
 # filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\S=2_3x3_T=3_Z=1_CH=2.czi"
 # filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\S=1_3x3_T=3_Z=4_CH=2.czi"
 # filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\S=2_3x3_T=3_Z=4_CH=2.czi"
-# filename = r"C:\Temp\input\DTScan_ID4_small.czi"
-filename = r"C:\Temp\input\DTScan_ID4.czi"
-# filename = r"C:\Temp\input\OverViewScan_8Brains.czi"
+#filename = r"D:\Temp\input\DTScan_ID4_small.czi"
+#filename = r"D:\Temp\input\DTScan_ID4.czi"
+#filename = r"D:\Temp\input\DTScan_ID4-nokeeptiles.czi"
+#filename = r"D:\Testdata_Zeiss\unmix_bug436511\Raw_nokeeptiles.czi"
+filename = r"D:\Testdata_Zeiss\unmix_bug436511\Raw_keeptiles.czi"
+#filename = r"D:\Testdata_Zeiss\unmix_bug436511\Raw_Uncompressed.czi"
+#filename = r"D:\Temp\input\OverViewScan_8Brains.czi"
+#filename = r"D:\Temp\input\OverViewScan_8Brains-keeptile.czi"
+#filename = r"D:\Temp\input\OverViewScan_8Brains-nokeeptile.czi"
 # filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Castor\testwell96.czi"
 # filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\Multiscene_CZI_3Scenes.czi"
 # filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\S=2_3x3_T=3_CH=2.czi"
@@ -49,6 +55,8 @@ if 'Z' in md['dims_aicspylibczi']:
 
 # read CZI using aicslibczi
 czi = CziFile(filename)
+
+ms = czi.read_mosaic_size()
 
 
 # get the required shape for all and single scenes

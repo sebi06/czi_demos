@@ -1271,9 +1271,14 @@ def calc_scaling(data, corr_min=1.0,
     :rtype: list
     """
 
-    # get min-max values for initial scaling
-    minvalue = np.round((data.min() + offset_min) * corr_min)
-    maxvalue = np.round((data.max() + offset_max) * corr_max)
+    if isinstance(data, zarr.Array):
+        minvalue = np.round((np.min(data) + offset_min) * corr_min)
+        maxvalue = np.round((np.max(data) + offset_max) * corr_max)
+
+    else:  # get min-max values for initial scaling
+        minvalue = np.round((data.min() + offset_min) * corr_min)
+        maxvalue = np.round((data.max() + offset_max) * corr_max)
+
     print('Scaling:', minvalue, maxvalue)
 
     return [minvalue, maxvalue]
@@ -1353,7 +1358,7 @@ def show_napari(viewer, array, metadata,
             if isinstance(array, da.Array):
                 print('Extract Channel as Dask.Array')
                 channel = slicedimC(array, ch, dimpos['C'])
-                #channel = array.compute().take(ch, axis=dimpos['C'])
+                # channel = array.compute().take(ch, axis=dimpos['C'])
             if isinstance(array, zarr.Array):
                 print('Extract Channel as Dask.Array')
                 channel = slicedimC(array, ch, dimpos['C'])
@@ -1405,7 +1410,7 @@ def show_napari(viewer, array, metadata,
             array = array.compute()
 
         # get min-max values for initial scaling
-        clim = calc_scaling(channel,
+        clim = calc_scaling(array,
                             corr_min=1.0,
                             offset_min=0,
                             corr_max=0.85,
