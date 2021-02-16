@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 #################################################################
-# File        : imgfileutils.py
-# Version     : 1.5.1
+# File        : imgfil_tools.py
+# Version     : 1.5.2
 # Author      : czsrh
 # Date        : 16.02.2021
 # Institution : Carl Zeiss Microscopy GmbH
@@ -1272,12 +1272,19 @@ def calc_scaling(data, corr_min=1.0,
     """
 
     if isinstance(data, zarr.Array):
-        minvalue = np.round((np.min(data) + offset_min) * corr_min)
-        maxvalue = np.round((np.max(data) + offset_max) * corr_max)
+        minvalue = np.min(data)
+        maxvalue = np.max(data)
+
+    elif isinstance(data, da.Array):
+        minvalue = data.compute().min()
+        maxvalue = data.compute().max()
 
     else:  # get min-max values for initial scaling
-        minvalue = np.round((data.min() + offset_min) * corr_min)
-        maxvalue = np.round((data.max() + offset_max) * corr_max)
+        minvalue = data.min()
+        maxvalue = data.max()
+
+    minvalue = np.round((minvalue + offset_min) * corr_min)
+    maxvalue = np.round((maxvalue + offset_max) * corr_max)
 
     print('Scaling:', minvalue, maxvalue)
 
