@@ -2,9 +2,9 @@
 
 #################################################################
 # File        : czi_tools.py
-# Version     : 0.0.7
+# Version     : 0.0.8
 # Author      : czsrh
-# Date        : 09.02.2021
+# Date        : 16.02.2021
 # Institution : Carl Zeiss Microscopy GmbH
 #
 # Copyright (c) 2021 Carl Zeiss AG, Germany. All Rights Reserved.
