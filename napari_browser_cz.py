@@ -334,9 +334,9 @@ def open_image_stack(filepath, force_dask=False):
         # decide whohc tool to use to read the image
         if metadata['ImageType'] != 'czi':
             use_aicsimageio = True
-        elif metadata['ImageType'] == 'czi' and metadata['czi_isMosaic'] == False:
+        elif metadata['ImageType'] == 'czi' and metadata['czi_isMosaic'] is False:
             use_aicsimageio = True
-        elif metadata['ImageType'] == 'czi' and metadata['czi_isMosaic'] == True:
+        elif metadata['ImageType'] == 'czi' and metadata['czi_isMosaic'] is True:
             use_aicsimageio = False
 
         if use_aicsimageio:
