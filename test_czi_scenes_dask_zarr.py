@@ -14,8 +14,8 @@ import napari
 # filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\Well_B2-4_S=4_T=1_Z=1_C=1.czi"
 # filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\W96_B2+B4_S=2_T=1=Z=1_C=1_Tile=5x9.czi"
 # filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\W96_B2+B4_S=2_T=2=Z=4_C=3_Tile=5x9.czi"
-#filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CD7\Z-Stack_DCV\CellDivision_T=10_Z=15_CH=2_DCV_small.czi"
-# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Castor\Mouse Kidney_40x0.95_3CD_JK_comp.czi"
+filename = r"C:\Testdata_Zeiss\CD7\Z-Stack_DCV\CellDivision_T=10_Z=15_CH=2_DCV_small.czi"
+#filename = r"C:\Testdata_Zeiss\CD7\Mouse Kidney_40x0.95_3CD_JK_comp.czi"
 # filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\S=1_3x3_T=1_Z=1_CH=2.czi"
 # filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\S=2_3x3_T=1_Z=1_CH=2.czi"
 # filename = r"/datadisk1/tuxedo/testpictures/Testdata_Zeiss/CZI_Testfiles/S=2_3x3_T=1_Z=1_CH=2.czi"
@@ -23,8 +23,8 @@ import napari
 # filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\S=2_3x3_T=3_Z=1_CH=2.czi"
 # filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\S=1_3x3_T=3_Z=4_CH=2.czi"
 # filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\S=2_3x3_T=3_Z=4_CH=2.czi"
-#filename = r"D:\Temp\input\DTScan_ID4_small.czi"
-#filename = r"D:\Temp\input\DTScan_ID4.czi"
+#filename = r"C:\Testdata_Zeiss\DTScan_ID4_small.czi"
+#filename = r"C:\Testdata_Zeiss\DTScan_ID4.czi"
 #filename = r"D:\Temp\input\DTScan_ID4-nokeeptiles.czi"
 #filename = r"D:\Testdata_Zeiss\unmix_bug436511\Raw_nokeeptiles.czi"
 #filename = r"D:\Testdata_Zeiss\unmix_bug436511\Raw_keeptiles.czi"
@@ -32,15 +32,15 @@ import napari
 #filename = r"D:\Temp\input\OverViewScan_8Brains.czi"
 #filename = r"D:\Temp\input\OverViewScan_8Brains-keeptile.czi"
 #filename = r"D:\Temp\input\OverViewScan_8Brains-nokeeptile.czi"
-# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Castor\testwell96.czi"
+#filename = r"C:\Testdata_Zeiss\CD7\testwell96.czi"
 # filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\Multiscene_CZI_3Scenes.czi"
 # filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\S=2_3x3_T=3_CH=2.czi"
 # filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\S=2_3x3_CH=2.czi"
-# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\S=2_3x3_Z=4_CH=2.czi"
+#filename = r"C:\Testdata_Zeiss\CZI_Testfiles\S=2_3x3_Z=4_CH=2.czi"
 # filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\Z=4_CH=2.czi"
 # filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\T=3_Z=4_CH=2.czi"
 # filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\T=3_CH=2.czi"
-filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\LatticeLightSheet\LS_Mitosis_T=150-300.czi"
+#filename = r"C:\Testdata_Zeiss\LatticeLightSheet\LS_Mitosis_T=150-300.czi"
 
 ######################################################################
 
@@ -100,9 +100,17 @@ if not use_aicsimageio and use_pylibczi is True:
 
         # define array to store all channels
         print('Using aicspylibCZI to read the image (ZARR array).')
-        all_scenes_array = zarr.create(tuple(shape_all),
-                                       dtype=md['NumPy.dtype'],
-                                       chunks=True)
+
+        # option 1
+        # all_scenes_array = zarr.create(tuple(shape_all),
+        #                               dtype=md['NumPy.dtype'],
+        #                               chunks=True)
+
+        # option 2
+        all_scenes_array = zarr.open(r'c:\Temp\czi_scene_all.zarr', mode='w',
+                                     shape=shape_all,
+                                     chunks=True,
+                                     dtype=md['NumPy.dtype'])
 
     if array_type == 'numpy':
         print('Using aicspylibCZI to read the image (Numpy.Array).')
