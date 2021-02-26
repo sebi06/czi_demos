@@ -40,7 +40,12 @@ filename = r"C:\Testdata_Zeiss\CD7\Z-Stack_DCV\CellDivision_T=10_Z=15_CH=2_DCV_s
 # filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\Z=4_CH=2.czi"
 # filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\T=3_Z=4_CH=2.czi"
 # filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\T=3_CH=2.czi"
-#filename = r"C:\Testdata_Zeiss\LatticeLightSheet\LS_Mitosis_T=150-300.czi"
+# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\LatticeLightSheet\LS_Mitosis_T=150-300.czi"
+filename = r"/datadisk1/tuxedo/testpictures/Testdata_Zeiss/BrainSlide/DTScan_ID4.czi"
+#filename = r"/datadisk1/tuxedo/testpictures/Testdata_Zeiss/CZI_Testfiles/96well_S=192_2pos_CH=3.czi"
+#filename = r"/datadisk1/tuxedo/testpictures/Testdata_Zeiss/CZI_Testfiles/W96_B2+B4_S=2_T=2=Z=4_C=3_Tile=5x9.czi"
+#filename = r"/datadisk1/tuxedo/testpictures/Testdata_Zeiss/Nuclei/nuclei_RGB/H+E/Tumor_H+E_small2.czi"
+#filename = r"/datadisk1/tuxedo/testpictures/Testdata_Zeiss/Nuclei/nuclei_RGB/H+E/Tumor_H+E.czi"
 
 ######################################################################
 
@@ -122,7 +127,7 @@ if not use_aicsimageio and use_pylibczi is True:
         for s in range(md['SizeS']):
             # get the CZIscene for the current scene
             single_scene = czt.CZIScene(czi, md, sceneindex=s)
-            out = czt.read_czi_scene(czi, single_scene, md)
+            out = czt.read_czi_scene(czi, single_scene, md, array_type=array_type)
             all_scenes_array[s, :, :, :, :, :] = np.squeeze(out, axis=0)
 
         print(all_scenes_array.shape)

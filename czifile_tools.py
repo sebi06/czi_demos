@@ -25,7 +25,6 @@ import dateutil.parser as dt
 from lxml import etree
 import progressbar
 import zarr
-import dask.array as da
 
 
 def define_czi_planetable():
@@ -469,18 +468,17 @@ def get_shape_allscenes(czi, md):
     return array_size_all_scenes, shape_single_scenes, same_shape
 
 
-def read_czi_scene(czi, scene, metadata, scalefactor=1.0):
+def read_czi_scene(czi, scene, metadata, scalefactor=1.0, array_type='zarr'):
 
-    # create the required array for this scene
-    #scene_array = np.empty(scene.shape_scene, dtype=metadata['NumPy.dtype'])
-    #scene_array = da.empty(scene.shape_scene, dtype=metadata['NumPy.dtype'])
-    # scene_array = np.memmap(r"c:\Temp\myarray.arr", mode="r",
-    #                        dtype=metadata['NumPy.dtype'],
-    #                        shape=scene.shape_scene)
-    scene_array = zarr.open(r'c:\Temp\czi_scene.zarr', mode='w',
-                            shape=scene.shape_scene,
-                            chunks=True,
-                            dtype=metadata['NumPy.dtype'])
+    if array_type == 'numpy':
+        # create the required array for this scene as numoy array
+        scene_array = np.empty(scene.shape_scene, dtype=metadata['NumPy.dtype'])
+
+    if array_type == "zarr":
+        # create the required array for this scene as numoy array
+        scene_array = zarr.create(tuple(scene.shape_scene),
+                                  dtype=metadata['NumPy.dtype'],
+                                  chunks=True)
 
     # check if scalefactor has a reasonable value
     if scalefactor < 0.01 or scalefactor > 1.0:
