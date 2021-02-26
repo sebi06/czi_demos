@@ -10,8 +10,8 @@ from tifffile import imread
 from csbdeep.utils import Path, normalize
 from csbdeep.io import save_tiff_imagej_compatible
 
-from stardist import random_label_cmap, _draw_polygons, export_imagej_rois
-from stardist.models import StarDist2D
+#from stardist import random_label_cmap, _draw_polygons, export_imagej_rois
+#from stardist.models import StarDist2D
 
 from aicspylibczi import CziFile
 
@@ -20,7 +20,7 @@ import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import imgfileutils as imf
+import imgfile_tools as imf
 import segmentation_tools as sgt
 from aicsimageio import AICSImage, imread
 from skimage import measure, segmentation
@@ -32,7 +32,10 @@ from IPython.display import display, HTML
 from MightyMosaic import MightyMosaic
 
 # specify the filename of the CZI file
-filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Atomic\Nuclei\nuclei_RGB\H&E\Tumor_H&E_small2.czi"
+#filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Atomic\Nuclei\nuclei_RGB\H&E\Tumor_H&E_small2.czi"
+filename = r"/datadisk1/tuxedo/testpictures/Testdata_Zeiss/Nuclei/nuclei_RGB/H+E/Tumor_H+E_small2.czi"
+
+
 # get the metadata from the czi file
 md, addmd = imf.get_metadata(filename)
 
