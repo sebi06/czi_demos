@@ -545,4 +545,14 @@ def read_czi_scene(czi, scene, metadata, scalefactor=1.0, array_type='zarr'):
                 #scene_array[:, 0, 0, c, :, :] = scene_array_c
                 scene_array[0, 0, 0, c, :, :] = scene_array_c[0, :, :]
 
+            # if scene.posC == 1:
+            #    # SCTZYX
+            #    scene_array[:, c, 0:1, 0:1, ...] = scene_array_c
+            # if scene.posC == 2:
+            #    # STCZYX
+            #    scene_array[:, 0:1, c, 0:1, ...] = scene_array_c
+            # if scene.posC == 3:
+            #    # STZCYX
+            #    scene_array[:, 0:1, 0:1, c, ...] = scene_array_c
+
     return scene_array

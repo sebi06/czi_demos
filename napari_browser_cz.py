@@ -2,9 +2,9 @@
 
 #################################################################
 # File        : napari_browser_cz.py
-# Version     : 0.2.0
+# Version     : 0.2.1
 # Author      : czsrh
-# Date        : 17.02.2021
+# Date        : 18.02.2021
 # Institution : Carl Zeiss Microscopy GmbH
 #
 # Disclaimer: This tool is purely experimental. Feel free to
@@ -312,7 +312,7 @@ class StartExperiment(QWidget):
             open_image_stack(self.saved_czifilepath)
 
 
-def open_image_stack(filepath, force_dask=False):
+def open_image_stack(filepath):
     """ Open a file using AICSImageIO and display it using napari
 
     :param path: filepath of the image
@@ -343,6 +343,7 @@ def open_image_stack(filepath, force_dask=False):
         elif metadata['ImageType'] == 'czi' and metadata['czi_isMosaic'] is True:
             use_aicsimageio = False
 
+        """
         # check if CZI has T or Z dimension
         hasT = False
         hasZ = False
@@ -350,6 +351,7 @@ def open_image_stack(filepath, force_dask=False):
             hasT = True
         if 'Z' in metadata['dims_aicspylibczi']:
             hasZ = True
+        """
 
         # read CZI using aicspylibczi
         czi = CziFile(filepath)
@@ -368,26 +370,25 @@ def open_image_stack(filepath, force_dask=False):
             # get AICSImageIO object
             img = AICSImage(filepath)
 
-            if not force_dask:
-                try:
-                    # check if the Dask Delayed Reader should be used
-                    if not checkboxes.cbox_dask.isChecked():
-                        print('Using AICSImageIO normal ImageReader.')
-                        all_scenes_array = img.get_image_data()
-                    if checkboxes.cbox_dask.isChecked():
-                        print('Using AICSImageIO Dask Delayed ImageReader')
-                        all_scenes_array = img.get_image_dask_data()
-                except Exception as e:
-                    print(e, 'No Checkboxes found. Using normal ImageReader.')
-            if force_dask:
-                print('Using Dask Delayed ImageReader')
+            try:
+                # check if the Dask Delayed Reader should be used
+                # if there is a checkbox widget
+                if not checkboxes.cbox_dask.isChecked():
+                    print('Using AICSImageIO normal ImageReader.')
+                    all_scenes_array = img.get_image_data()
+                if checkboxes.cbox_dask.isChecked():
+                    print('Using AICSImageIO Dask Delayed ImageReader.')
+                    all_scenes_array = img.get_image_dask_data()
+            except Exception as e:
+                # in case there is no checkbox widget
+                print(e, 'No Checkboxes found. Using AICSImageIO Dask Delayed ImageReader.')
                 all_scenes_array = img.get_image_dask_data()
 
         if not use_aicsimageio and use_pylibczi is True:
 
-            #array_type = 'dask'
+            # array_type = 'dask'
             array_type = 'zarr'
-            #array_type = 'numpy'
+            # array_type = 'numpy'
 
             if array_type == 'zarr':
 
@@ -473,6 +474,11 @@ def get_zenfolders(zen_subfolder='Experiment Setups'):
 
 ###########################################################
 
+
+show_expselect = False
+show_options = False
+
+
 if __name__ == "__main__":
 
     # make sure this location is correct if you specify this
@@ -545,24 +551,26 @@ if __name__ == "__main__":
 
         # table for the metadata and for options
         mdbrowser = TableWidget()
-        checkboxes = OptionsWidget()
-
-        # widget to start an experiment in ZEN remotely
-        expselect = StartExperiment(expfiles_short,
-                                    savefolder=workdir,
-                                    default_cziname=default_cziname)
-
-        # add widget to activate the dask delayed reading
-        cbwidget = viewer.window.add_dock_widget(checkboxes,
-                                                 name='checkbox',
-                                                 area='bottom')
-
         # add the Table widget for the metadata
         mdwidget = viewer.window.add_dock_widget(mdbrowser,
                                                  name='mdbrowser',
                                                  area='right')
 
-        # add the Experiment Selector widget
-        expwidget = viewer.window.add_dock_widget(expselect,
-                                                  name='expselect',
-                                                  area='bottom')
+        if show_options:
+            checkboxes = OptionsWidget()
+
+            # add widget to activate the dask delayed reading
+            cbwidget = viewer.window.add_dock_widget(checkboxes,
+                                                     name='checkbox',
+                                                     area='bottom')
+
+        if show_expselect:
+            # widget to start an experiment in ZEN remotely
+            expselect = StartExperiment(expfiles_short,
+                                        savefolder=workdir,
+                                        default_cziname=default_cziname)
+
+            # add the Experiment Selector widget
+            expwidget = viewer.window.add_dock_widget(expselect,
+                                                      name='expselect',
+                                                      area='bottom')
