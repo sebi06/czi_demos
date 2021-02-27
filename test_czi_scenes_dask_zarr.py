@@ -46,6 +46,8 @@ filename = r"/datadisk1/tuxedo/testpictures/Testdata_Zeiss/BrainSlide/DTScan_ID4
 #filename = r"/datadisk1/tuxedo/testpictures/Testdata_Zeiss/CZI_Testfiles/W96_B2+B4_S=2_T=2=Z=4_C=3_Tile=5x9.czi"
 #filename = r"/datadisk1/tuxedo/testpictures/Testdata_Zeiss/Nuclei/nuclei_RGB/H+E/Tumor_H+E_small2.czi"
 #filename = r"/datadisk1/tuxedo/testpictures/Testdata_Zeiss/Nuclei/nuclei_RGB/H+E/Tumor_H+E.czi"
+#filename = r"/datadisk1/tuxedo/testpictures/Testdata_Zeiss/celldivision/CellDivision_T=10_Z=15_CH=2_DCV_small.czi"
+#filename = r"/datadisk1/tuxedo/testpictures/Testdata_Zeiss/CZI_Testfiles/S=2_3x3_T=3_Z=4_CH=2.czi"
 
 ######################################################################
 
