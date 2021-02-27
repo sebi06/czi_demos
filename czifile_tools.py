@@ -514,10 +514,12 @@ def read_czi_scene(czi, scene, metadata, scalefactor=1.0, array_type='zarr'):
                 if scene.posZ == 2:
                     # STZCYX
                     #scene_array[:, t, z, c, :, :] = scene_array_tzc
+                    #scene_array[:, t, z, c, :, :] = scene_array_tzc[:, 0, 0]
                     scene_array[0, t, z, c, :, :] = scene_array_tzc[0, 0, 0, :, :]
                 if scene.posZ == 3:
                     # STCZYX
                     #scene_array[:, t, c, z, :, :] = scene_array_tzc
+                    #scene_array[:, t, c, z, :, :] = scene_array_tzc[:, 0, 0]
                     scene_array[0, t, c, z, :, :] = scene_array_tzc[0, 0, 0, :, :]
 
     # in case no T and Z dimension are found
