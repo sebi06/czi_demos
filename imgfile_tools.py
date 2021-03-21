@@ -2,9 +2,9 @@
 
 #################################################################
 # File        : imgfil_tools.py
-# Version     : 1.6.1
+# Version     : 1.6.2
 # Author      : czsrh
-# Date        : 17.02.2021
+# Date        : 21.03.2021
 # Institution : Carl Zeiss Microscopy GmbH
 #
 # Disclaimer: This tool is purely experimental. Feel free to
@@ -394,6 +394,7 @@ def get_metadata_czi(filename, dim2none=False,
     metadatadict_czi = czi.metadata(raw=False)
 
     # initialize metadata dictionary
+    #metadata = {}
     metadata = create_metadata_dict()
 
     # get directory and filename etc.
@@ -449,6 +450,8 @@ def get_metadata_czi(filename, dim2none=False,
     # on the last dimension entry of axes
     if czi.shape[-1] == 3:
         metadata['czi_isRGB'] = True
+    if czi.shape[-1] != 3:
+        metadata['czi_isRGB'] = False
     print('CZI is RGB :', metadata['czi_isRGB'])
 
     try:

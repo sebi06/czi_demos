@@ -16,9 +16,9 @@ import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import imgfileutils as imf
+import imgfile_tools as imf
 import segmentation_tools as sgt
-import visutools as vst
+import visu_tools as vst
 from aicsimageio import AICSImage, imread
 from scipy import ndimage
 from skimage import measure, segmentation
