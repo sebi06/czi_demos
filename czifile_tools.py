@@ -557,4 +557,36 @@ def read_czi_scene(czi, scene, metadata, scalefactor=1.0, array_type='zarr'):
             #    # STZCYX
             #    scene_array[:, 0:1, 0:1, c, ...] = scene_array_c
 
+    if scene.hasT is False and scene.hasZ is True:
+
+        # create an array for the scene
+        for z, c in it.product(range(scene.sizeZ),
+                               range(scene.sizeC)):
+
+            scene_array_zc = czi.read_mosaic(region=(scene.xstart,
+                                                     scene.ystart,
+                                                     scene.width,
+                                                     scene.height),
+                                             scale_factor=scalefactor,
+                                             Z=z,
+                                             C=c)
+
+            if scene.posC == 1:
+                if scene.posZ == 2:
+                    # SCTZYX
+                    scene_array[0, c, 0, 0, :, :] = scene_array_zc[0, 0, :, :]
+
+            if scene.posC == 2:
+                if scene.posZ == 1:
+                    # SZCTYX
+                    scene_array[0, z, c, 0, :, :] = scene_array_zc[0, 0, :, :]
+                if scene.posZ == 3:
+                    # STCZYX
+                    scene_array[0, 0, c, z, :, :] = scene_array_zc[0, 0, :, :]
+
+            if scene.posC == 3:
+                if scene.posZ == 2:
+                    # STZCYX
+                    scene_array[0, 0, z, c, :, :] = scene_array_zc[0, 0, :, :]
+
     return scene_array

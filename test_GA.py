@@ -17,7 +17,8 @@ import pandas as pd
 import tifffile
 import progressbar
 
-filename = r"E:\tuxedo\testpictures\Testdata_Zeiss\BrainSlide\OverViewScan_analyzed.czi"
+# filename = r"E:\tuxedo\testpictures\Testdata_Zeiss\BrainSlide\OverViewScan_analyzed.czi"
+filename = r"C:\Users\m1srh\Downloads\Halo_CZI.czi"
 
 # get the metadata from the czi file
 md, additional_mdczi = imf.get_metadata(filename)
@@ -30,19 +31,19 @@ cols = ['S', 'T', 'Z', 'C', 'Number']
 objects = pd.DataFrame(columns=cols)
 
 # optional dipslay of "some" results - empty list = no display
-show_image = []
+show_image = [0]
 
-# threshold parameters - will be used depending on the choice for the segmentation method
+# threshold parameters - will be used depending on the segmentation method
 filtermethod = 'median'
 filtersize = 3
-threshold = 'triangle'
+threshold = 'global_otsu'
 # use watershed for splitting - ws or ws_adv
 use_ws = False
 ws_method = 'ws_adv'
 min_distance = 5
 radius_dilation = 1
 chindex = 0
-minsize = 100000
+minsize = 1
 maxsize = 10000000
 
 # read the czi mosaic image
@@ -53,8 +54,11 @@ print('Size         : ', czi.size)
 print('Shape        : ', czi.dims_shape())
 print('IsMoasic     : ', czi.is_mosaic())
 
+
+mosaic = czi.read_mosaic(C=0, scale_factor=0.2)
+
 # read the mosaic pixel data
-image2d = np.squeeze(czi.read_mosaic(C=0, scale_factor=1.0), axis=0)
+image2d = np.squeeze(mosaic, axis=0)
 print('Mosaic Shape :', image2d.shape)
 
 image_counter = 0
@@ -73,12 +77,12 @@ with tifffile.TiffWriter(savename, append=False) as tif:
 
         # segment the image
         mask = sgt.segment_threshold(image2d, filtermethod=filtermethod,
-                                                filtersize=filtersize,
-                                                threshold=threshold,
-                                                split_ws=use_ws,
-                                                min_distance=min_distance,
-                                                ws_method=ws_method,
-                                                radius=radius_dilation)
+                                     filtersize=filtersize,
+                                     threshold=threshold,
+                                     split_ws=use_ws,
+                                     min_distance=min_distance,
+                                     ws_method=ws_method,
+                                     radius=radius_dilation)
 
         # clear the border
         mask = segmentation.clear_border(mask)
@@ -99,7 +103,7 @@ with tifffile.TiffWriter(savename, append=False) as tif:
         ).set_index('label')
 
         # filter objects by size
-        props = props[(props['area'] >= minsize) & (props['area'] <= maxsize)]
+        #props = props[(props['area'] >= minsize) & (props['area'] <= maxsize)]
 
         # add well information for CZI metadata
         try:
@@ -128,13 +132,12 @@ with tifffile.TiffWriter(savename, append=False) as tif:
         image_counter += 1
         # optional display of results
         if image_counter - 1 in show_image:
-            print('Well:', props['WellId'].iloc[0],
-                  'Index S-C:', s, chindex,
-                  'Objects:', values['Number'])
-            
-            ax = vst.plot_segresults(image2d, mask, props,
-                                        add_bbox=True)
+            print('Well:', props['WellId'].iloc[0], 'Index S-C:', s, chindex, 'Objects:', values['Number'])
 
+            ax = vst.plot_segresults(image2d, mask, props,
+                                     add_bbox=True)
+
+        """
         # write scene as OME-TIFF series
         tif.save(mask,
                  photometric='minisblack',
@@ -147,6 +150,7 @@ with tifffile.TiffWriter(savename, append=False) as tif:
                            'PhysicalSizeZUnit': md['ZScaleUnit']
                            }
                  )
+        """
 
 # rename colums in pandas datatable
 results.rename(columns={'bbox-0': 'ystart',
