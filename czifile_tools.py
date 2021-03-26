@@ -400,30 +400,67 @@ class CZIScene:
         self.index = sceneindex
         self.hasT = False
         self.hasZ = False
-        self.sizeT = None
-        self.sizeZ = None
-        self.sizeC = czi.dims_shape()[0]['C'][1]
+        self.hasS = False
+        #self.sizeT = None
+        #self.sizeZ = None
+        #self.sizeS = None
+        #self.sizeC = czi.dims_shape()[0]['C'][1]
+        #self.sizeS = czi.dims_shape()[0]['S'][1]
+        #self.sizeT = czi.dims_shape()[0]['T'][1]
+        #self.sizeZ = czi.dims_shape()[0]['Z'][1]
 
         # check if the scene has T or Z slices
         dims_aicspylibczi = czi.dims_shape()[0]
+
+        if 'C' in dims_aicspylibczi:
+            self.hasC = True
+            self.sizeC = czi.dims_shape()[0]['C'][1]
+        else:
+            self.hasS = False
+            self.sizeS = None
+
         if 'T' in dims_aicspylibczi:
             self.hasT = True
             self.sizeT = czi.dims_shape()[0]['T'][1]
+        else:
+            self.hasT = False
+            self.sizeT = None
 
         if 'Z' in dims_aicspylibczi:
             self.hasZ = True
             self.sizeZ = czi.dims_shape()[0]['Z'][1]
+        else:
+            self.hasZ = False
+            self.sizeZ = None
+
+        if 'S' in dims_aicspylibczi:
+            self.hasS = True
+            self.sizeS = czi.dims_shape()[0]['S'][1]
+        else:
+            self.hasS = False
+            self.sizeS = None
+
+        if 'M' in dims_aicspylibczi:
+            self.hasM = True
+            self.sizeM = czi.dims_shape()[0]['M'][1]
+        else:
+            self.hasM = False
+            self.sizeM = None
 
         # determine the shape of the scene
         shape_single_scene = [1]
+        single_scene_dimstr = 'S'
         posdict = {'S': 'SizeS', 'T': 'SizeT', 'C': 'SizeC', 'Z': 'SizeZ'}
 
         # find key based upon value
         for v in range(1, 4):
+
             # get the corresponding dim_id, e.g. 'S'
             dim_id = imf.get_key(md['dimpos_aics'], v)
+
             # get the correspong string to access the size of tht dimension
             dimstr = posdict[dim_id]
+
             # append size for this dimension to list containing the shape
             shape_single_scene.append(md[dimstr])
 

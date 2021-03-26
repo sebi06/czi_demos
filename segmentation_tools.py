@@ -24,7 +24,6 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import matplotlib.patches as mpatches
 
-#from czitools import imgfileutils as imf
 import imgfile_tools as imf
 
 from aicsimageio import AICSImage, imread
@@ -183,7 +182,8 @@ def segment_threshold(image2d,
                       split_ws=True,
                       min_distance=30,
                       ws_method='ws_adv',
-                      radius=1):
+                      radius=1,
+                      dtypemask=np.int16):
     """Segment an image using the following steps:
     - filter image
     - threshold image
@@ -205,12 +205,14 @@ def segment_threshold(image2d,
     :type ws_method: str, optional
     :param radius: radius for dilation disk, defaults to 1
     :type radius: int, optional
+    :param dtypemask: datatype of output mask, defaults to np.int16
+    :type dtypemask: np.dtype, optional
     :return: mask - binary mask
     :rtype: NumPy.Array
     """
 
     # filter image
-    if filtermethod is None:
+    if filtermethod == 'none' or filtermethod == 'None':
         image2d_filtered = image2d
     if filtermethod == 'median':
         image2d_filtered = median(image2d, selem=disk(filtersize))
@@ -237,7 +239,7 @@ def segment_threshold(image2d,
         mask, num_features = ndimage.label(binary)
         mask = mask.astype(np.int)
 
-    return mask
+    return mask.astype(dtypemask)
 
 
 def autoThresholding(image2d,
