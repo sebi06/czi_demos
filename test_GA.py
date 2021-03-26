@@ -46,8 +46,9 @@ def bbox2stageXY(image_stageX=0,  # image center stageX [micron]
     return bbox_center_stageX, bbox_center_stageY
 
 
-filename = r"C:\Testdata_Zeiss\OverViewScan.czi"
+#filename = r"C:\Testdata_Zeiss\OverViewScan.czi"
 #filename = r"C:\Users\m1srh\Downloads\Halo_CZI.czi"
+filename = r'/home/sebi06/Dropbox_Linux/Dropbox/aicspylibczi/OverViewScan.czi'
 
 # get the metadata from the czi file
 md, additional_mdczi = imf.get_metadata(filename)
@@ -102,13 +103,11 @@ print('IsMoasic     : ', czi.is_mosaic())
 if czi.is_mosaic():
     print('Mosaic Size  : ', czi.read_mosaic_size())
 
-#mosaic = czi.read_mosaic(C=0, scale_factor=1.0)
-mosaic = czi.read_mosaic(C=0)
-
 # read the mosaic pixel data
-image2d = np.squeeze(mosaic, axis=0)
-print('Mosaic Shape :', image2d.shape)
+mosaic = czi.read_mosaic(C=0, scale_factor=1.0)
+print('Mosaic Shape :', mosaic.shape)
 
+image2d = np.squeeze(mosaic, axis=0)
 md['SizeX_readmosaic'] = image2d.shape[1]
 md['SizeY_readmosaic'] = image2d.shape[0]
 
