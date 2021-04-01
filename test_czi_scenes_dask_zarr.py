@@ -48,7 +48,8 @@ import napari
 #filename = r"/datadisk1/tuxedo/testpictures/Testdata_Zeiss/Nuclei/nuclei_RGB/H+E/Tumor_H+E.czi"
 #filename = r"/datadisk1/tuxedo/testpictures/Testdata_Zeiss/celldivision/CellDivision_T=10_Z=15_CH=2_DCV_small.czi"
 #filename = r"/datadisk1/tuxedo/testpictures/Testdata_Zeiss/CZI_Testfiles/S=2_3x3_T=3_Z=4_CH=2.czi"
-filename = r"C:\Users\m1srh\Downloads\Halo_CZI_small.czi"
+#filename = r"C:\Users\m1srh\Downloads\Halo_CZI_small.czi"
+filename = r"C:\Testdata_Zeiss\OverViewScan.czi"
 #filename = r"d:\Testdata_Zeiss\CZI_Testfiles\aicspylibczi\color_lines.czi"
 #filename = r"d:\Testdata_Zeiss\CZI_Testfiles\aicspylibczi\test2.czi"
 #filename = r"d:\Testdata_Zeiss\CZI_Testfiles\aicspylibczi\test4.czi"
@@ -96,6 +97,15 @@ if not use_aicsimageio and use_pylibczi is True:
 
     # read CZI using aicspylibczi
     czi = CziFile(filename)
+
+    # for testing
+    # Get the shape of the data
+    print('Dimensions   : ', czi.dims)
+    print('Size         : ', czi.size)
+    print('Shape        : ', czi.dims_shape())
+    print('IsMoasic     : ', czi.is_mosaic())
+    if czi.is_mosaic():
+        print('Mosaic Size  : ', czi.read_mosaic_size())
 
     # get the required shape for all and single scenes
     shape_all, shape_single, same_shape = czt.get_shape_allscenes(czi, md)

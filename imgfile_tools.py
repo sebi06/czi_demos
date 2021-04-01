@@ -1188,21 +1188,21 @@ def get_array_czi(filename,
     cziarray = czi.asarray()
 
     # check for H dimension and remove
-    if remove_HDim and metadata['Axes_czifile'][0] == 'H':
+    if remove_HDim and metadata['axes_czifile'][0] == 'H':
         # metadata['Axes'] = metadata['Axes_czifile'][1:]
-        metadata['Axes_czifile'] = metadata['Axes_czifile'].replace('H', '')
+        metadata['axes_czifile'] = metadata['axes_czifile'].replace('H', '')
         cziarray = np.squeeze(cziarray, axis=0)
 
     # get additional information about dimension order etc.
-    dim_dict, dim_list, numvalid_dims = get_dimorder(metadata['Axes_czifile'])
+    dim_dict, dim_list, numvalid_dims = get_dimorder(metadata['axes_czifile'])
     metadata['DimOrder CZI'] = dim_dict
 
     if cziarray.shape[-1] == 3:
         pass
     else:
         # remove the last dimension from the end
-        cziarray = np.squeeze(cziarray, axis=len(metadata['Axes_czifile']) - 1)
-        metadata['Axes_czifile'] = metadata['Axes_czifile'].replace('0', '')
+        cziarray = np.squeeze(cziarray, axis=len(metadata['axes_czifile']) - 1)
+        metadata['axes_czifile'] = metadata['axes_czifile'].replace('0', '')
 
     if replace_value:
         cziarray = replace_value(cziarray, value=0)
@@ -2061,7 +2061,7 @@ def slicedim(array, dimindex, posdim):
 
     """
     # old way to it differently
-    
+
     if isinstance(array, da.Array):
         print('Extract Channel as Dask.Array')
         channel = slicedimC(array, ch, dimpos['C'])
