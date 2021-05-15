@@ -387,25 +387,29 @@ def get_metadata_czi(filename, dim2none=False,
     :rtype: dict
     """
 
-    # get CZI object
-    czi = zis.CziFile(filename)
-
-    # parse the XML into a dictionary
-    metadatadict_czi = czi.metadata(raw=False)
-
     # initialize metadata dictionary
     #metadata = {}
     metadata = create_metadata_dict()
+
+    # get CZI object using czifile package
+    czi = zis.CziFile(filename)
+
+    # parse the XML into a dictionary
+    #metadatadict_czi = czi.metadata(raw=False)
+
+    # add axes and shape information using czifile package
+    metadata['axes_czifile'] = czi.axes
+    metadata['shape_czifile'] = czi.shape
+
+    # get metadata dictionary using aicspylibczi
+    czi_aicspylibczi = CziFile(filename)
+    metadatadict_czi = xmltodict.parse(ET.tostring(czi_aicspylibczi.meta))
 
     # get directory and filename etc.
     metadata['Directory'] = os.path.dirname(filename)
     metadata['Filename'] = os.path.basename(filename)
     metadata['Extension'] = 'czi'
     metadata['ImageType'] = 'czi'
-
-    # add axes and shape information using czifile package
-    metadata['axes_czifile'] = czi.axes
-    metadata['shape_czifile'] = czi.shape
 
     # add axes and shape information using aicsimageio package
     czi_aics = AICSImage(filename)
@@ -430,11 +434,10 @@ def get_metadata_czi(filename, dim2none=False,
 
     # get additional data by using pylibczi directly
     # Get the shape of the data, the coordinate pairs are (start index, size)
-    aics_czi = CziFile(filename)
-    metadata['dims_aicspylibczi'] = aics_czi.dims_shape()[0]
-    metadata['axes_aicspylibczi'] = aics_czi.dims
-    metadata['size_aicspylibczi'] = aics_czi.size
-    metadata['czi_isMosaic'] = aics_czi.is_mosaic()
+    metadata['dims_aicspylibczi'] = czi_aicspylibczi.dims_shape()[0]
+    metadata['axes_aicspylibczi'] = czi_aicspylibczi.dims
+    metadata['size_aicspylibczi'] = czi_aicspylibczi.size
+    metadata['czi_isMosaic'] = czi_aicspylibczi.is_mosaic()
     print('CZI is Mosaic :', metadata['czi_isMosaic'])
 
     # get positions of dimensions
@@ -519,8 +522,12 @@ def get_metadata_czi(filename, dim2none=False,
             channels_names.append(metadatadict_czi['ImageDocument']['Metadata']['DisplaySetting']
                                   ['Channels']['Channel']['Name'])
         except KeyError as e:
-            print('Channel name found :', e)
-            channels_names.append['CH1']
+            try:
+                channels_names.append(metadatadict_czi['ImageDocument']['Metadata']['DisplaySetting']
+                                      ['Channels']['Channel']['@Name'])
+            except KeyError as e:
+                print('Channel name found :', e)
+                channels_names.append['CH1']
 
         # get channel color
         try:
@@ -552,8 +559,12 @@ def get_metadata_czi(filename, dim2none=False,
                 channels_names.append(metadatadict_czi['ImageDocument']['Metadata']['DisplaySetting']
                                       ['Channels']['Channel'][ch]['Name'])
             except KeyError as e:
-                print('Channel name not found :', e)
-                channels_names.append('CH' + str(ch))
+                try:
+                    channels_names.append(metadatadict_czi['ImageDocument']['Metadata']['DisplaySetting']
+                                          ['Channels']['Channel'][ch]['@Name'])
+                except KeyError as e:
+                    print('Channel name not found :', e)
+                    channels_names.append('CH' + str(ch))
 
             # get channel colors
             try:
@@ -1031,10 +1042,10 @@ def get_metadata_czi(filename, dim2none=False,
     metadata['BBoxes_Scenes'] = czt.getbboxes_allscenes(cziobject, metadata,
                                                         numscenes=metadata['SizeS'])
 
-    # close CZI file
+    # close CZI object from czifile
     czi.close()
 
-    # close AICSImage object
+    # close CZI object from AICSImageIO
     czi_aics.close()
 
     return metadata

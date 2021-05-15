@@ -1,6 +1,6 @@
 from aicspylibczi import CziFile
-from aicsimageio import AICSImage, imread, imread_dask
-import apeer_ometiff_library as apt
+from aicsimageio import AICSImage  # , imread, imread_dask
+from apeer_ometiff_library import io
 
 import czifiletools.imgfile_tools as imf
 import czifiletools.fileutils as czt
@@ -8,19 +8,19 @@ import czifiletools.segmentation_tools as sgt
 import czifiletools.visu_tools as vst
 
 import numpy as np
-import zarr
-import dask
-import dask.array as da
-from dask import delayed
-from itertools import product
+#import zarr
+#import dask
+#import dask.array as da
+#from dask import delayed
+#from itertools import product
 
 from skimage import measure, segmentation, morphology
-#from skimage.morphology import white_tophat, black_tophat, disk, square, ball, closing, square
-#from skimage.filters import threshold_otsu, threshold_triangle, median, gaussian
-#from skimage.measure import regionprops
-#from skimage.color import label2rgb
+from skimage.morphology import white_tophat, black_tophat, disk, square, ball, closing, square
+from skimage.filters import threshold_otsu, threshold_triangle, median, gaussian
+from skimage.measure import regionprops
+from skimage.color import label2rgb
 import pandas as pd
-import tifffile
+#import tifffile
 import progressbar
 
 
@@ -76,23 +76,27 @@ show_image = [0]
 sf = 1.0
 
 # threshold parameters - will be used depending on the segmentation method
-filtermethod = 'none'
+filtermethod = 'median'
 filtersize = 5
 threshold = 'triangle'
+
 # use watershed for splitting - ws or ws_adv
 use_ws = False
 ws_method = 'ws_adv'
 min_distance = 5
 radius_dilation = 1
 chindex = 0
+
+# define object sizes
 minsize = 100000
-maxsize = 10000000
+maxsize = 1000000000
+
+# define minimum hole size
 minholesize = 1000
-#minsize = np.int(np.round(100000 / (sf**2), 0))
-#maxsize = np.int(np.round(10000000 / (sf**2), 0))
-#minholesize = np.int(np.round(1000 / (sf**2), 0))
+
+# define save format for mask
 adapt_dtype_mask = True
-dtype_mask = np.int16
+dtype_mask = np.int8
 
 # check if it makes sense
 if minholesize > minsize:
@@ -124,111 +128,107 @@ results = pd.DataFrame()
 savename = filename.split('.')[0] + '.ome.tiff'
 #savename = filename.split('.')[0] + '.tiff'
 
-# open the TiffWriter in order to save as Multi-Series OME-TIFF
-with tifffile.TiffWriter(savename, append=False) as tif:
+for s in progressbar.progressbar(range(md['SizeS']), redirect_stdout=True):
+    for t in range(md['SizeT']):
+        for z in range(md['SizeZ']):
 
-    for s in progressbar.progressbar(range(md['SizeS']), redirect_stdout=True):
+            values = {'S': s,
+                      'T': t,
+                      'Z': z,
+                      'C': chindex,
+                      'Number': 0}
 
-        values = {'S': s,
-                  'C': chindex,
-                  'Number': 0}
+    # filter image
+    if filtermethod == 'none' or filtermethod == 'None':
+        image2d_filtered = image2d
+    if filtermethod == 'median':
+        image2d_filtered = median(image2d, selem=disk(filtersize))
+    if filtermethod == 'gauss':
+        image2d_filtered = gaussian(image2d, sigma=filtersize, mode='reflect')
 
-        # filter image
-        if filtermethod == 'none' or filtermethod == 'None':
-            image2d_filtered = image2d
-        if filtermethod == 'median':
-            image2d_filtered = median(image2d, selem=disk(filtersize))
-        if filtermethod == 'gauss':
-            image2d_filtered = gaussian(image2d, sigma=filtersize, mode='reflect')
+    # threshold image and run marker-based watershed
+    binary = sgt.autoThresholding(image2d_filtered, method=threshold)
 
-        # threshold image and run marker-based watershed
-        binary = sgt.autoThresholding(image2d_filtered, method=threshold)
-
-        # remove small holes
-        mask = morphology.remove_small_holes(binary,
-                                             area_threshold=minholesize,
-                                             connectivity=1,
-                                             in_place=True)
-
-        # remove small objects
-        mask = morphology.remove_small_objects(mask,
-                                               min_size=minsize,
-                                               in_place=True)
-
-        # clear the border
-        mask = segmentation.clear_border(mask,
-                                         bgval=0,
+    # remove small holes
+    mask = morphology.remove_small_holes(binary,
+                                         area_threshold=minholesize,
+                                         connectivity=1,
                                          in_place=True)
 
-        # label the objects
-        mask = measure.label(binary)
+    # remove small objects
+    mask = morphology.remove_small_objects(mask,
+                                           min_size=minsize,
+                                           in_place=True)
 
-        # adapt pixel type of mask
-        if adapt_dtype_mask:
-            mask = mask.astype(np.int16, copy=False)
+    # clear the border
+    mask = segmentation.clear_border(mask,
+                                     bgval=0,
+                                     in_place=True)
 
-        # measure region properties
-        to_measure = ('label',
-                      'area',
-                      'centroid',
-                      'bbox')
+    # label the objects
+    mask = measure.label(binary)
 
-        # measure the specified parameters store in dataframe
-        props = pd.DataFrame(
-            measure.regionprops_table(
-                mask,
-                intensity_image=image2d,
-                properties=to_measure
-            )
-        ).set_index('label')
+    # adapt pixel type of mask
+    if adapt_dtype_mask:
+        mask = mask.astype(dtype_mask, copy=False)
 
-        # filter objects by size
-        #props = props[(props['area'] >= minsize) & (props['area'] <= maxsize)]
+    # measure region properties
+    to_measure = ('label',
+                  'area',
+                  'centroid',
+                  'bbox')
 
-        # add well information for CZI metadata
-        try:
-            props['WellId'] = md['Well_ArrayNames'][s]
-            props['Well_ColId'] = md['Well_ColId'][s]
-            props['Well_RowId'] = md['Well_RowId'][s]
-        except (IndexError, KeyError) as error:
-            # Output expected ImportErrors.
-            print('Key not found:', error)
-            print('Well Information not found. Using S-Index.')
-            props['WellId'] = s
-            props['Well_ColId'] = s
-            props['Well_RowId'] = s
+    # measure the specified parameters store in dataframe
+    props = pd.DataFrame(
+        measure.regionprops_table(
+            mask,
+            intensity_image=image2d,
+            properties=to_measure
+        )
+    ).set_index('label')
 
-        # add plane indices
-        props['S'] = s
-        props['C'] = chindex
+    # filter objects by size
+    props = props[(props['area'] >= minsize) & (props['area'] <= maxsize)]
 
-        # count the number of objects
-        values['Number'] = props.shape[0]
+    # add well information for CZI metadata
+    try:
+        props['WellId'] = md['Well_ArrayNames'][s]
+        props['Well_ColId'] = md['Well_ColId'][s]
+        props['Well_RowId'] = md['Well_RowId'][s]
+    except (IndexError, KeyError) as error:
+        # Output expected ImportErrors.
+        print('Key not found:', error)
+        print('Well Information not found. Using S-Index.')
+        props['WellId'] = s
+        props['Well_ColId'] = s
+        props['Well_RowId'] = s
 
-        # update dataframe containing the number of objects
-        objects = objects.append(pd.DataFrame(values, index=[0]), ignore_index=True)
-        results = results.append(props, ignore_index=True)
+    # add plane indices
+    props['S'] = s
+    props['T'] = t
+    props['Z'] = z
+    props['C'] = chindex
 
-        image_counter += 1
-        # optional display of results
-        if image_counter - 1 in show_image:
-            print('Well:', props['WellId'].iloc[0], 'Index S-C:', s, chindex, 'Objects:', values['Number'])
+    # count the number of objects
+    values['Number'] = props.shape[0]
 
-            ax = vst.plot_segresults(image2d, mask, props,
-                                     add_bbox=True)
+    # update dataframe containing the number of objects
+    objects = objects.append(pd.DataFrame(values, index=[0]), ignore_index=True)
+    results = results.append(props, ignore_index=True)
 
-        # write scene as OME-TIFF series
-        tif.save(mask,
-                 photometric='minisblack',
-                 metadata={'axes': 'YX',
-                           'PhysicalSizeX': np.round(md['XScale'], 3),
-                           'PhysicalSizeXUnit': md['XScaleUnit'],
-                           'PhysicalSizeY': np.round(md['YScale'], 3),
-                           'PhysicalSizeYUnit': md['YScaleUnit'],
-                           'PhysicalSizeZ': np.round(md['ZScale'], 3),
-                           'PhysicalSizeZUnit': md['ZScaleUnit']
-                           }
-                 )
+    image_counter += 1
+    # optional display of results
+    if image_counter - 1 in show_image:
+        print('Well:', props['WellId'].iloc[0], 'Index S-C:', s, chindex, 'Objects:', values['Number'])
+
+        # ax = vst.plot_segresults(image2d, mask, props,
+        #                         add_bbox=True)
+
+# make sure the array as 5D of order (T, Z, C, X, Y) to write an correct OME-TIFF
+mask = imf.expand_dims5d(mask, md)
+
+# write the OME-TIFF suing apeer-ometiff-library
+io.write_ometiff(savename, mask, omexml_string=None)
 
 # rename columns in pandas datatable
 results.rename(columns={'bbox-0': 'ystart',
@@ -236,8 +236,6 @@ results.rename(columns={'bbox-0': 'ystart',
                         'bbox-2': 'yend',
                         'bbox-3': 'xend'},
                inplace=True)
-
-# create new columns
 
 # calculate the bbox width in height in [pixel] and [micron]
 results['bbox_width'] = results['xend'] - results['xstart']
@@ -256,6 +254,6 @@ results['bbox_center_stageX'], results['bbox_center_stageY'] = bbox2stageXY(imag
                                                                             bbox_width=results['bbox_width'],
                                                                             bbox_height=results['bbox_height'])
 
-print(objects)
+# show results
 print(results)
 print('Done.')
