@@ -1,18 +1,13 @@
 from aicspylibczi import CziFile
-from aicsimageio import AICSImage  # , imread, imread_dask
+from aicsimageio import AICSImage
 from apeer_ometiff_library import io
 
-import czifiletools.imgfile_tools as imf
-import czifiletools.fileutils as czt
-import czifiletools.segmentation_tools as sgt
-import czifiletools.visu_tools as vst
+import tools.imgfile_tools as imf
+import tools.fileutils as czt
+import tools.segmentation_tools as sgt
+import tools.visu_tools as vst
 
 import numpy as np
-#import zarr
-#import dask
-#import dask.array as da
-#from dask import delayed
-#from itertools import product
 
 from skimage import measure, segmentation, morphology
 from skimage.morphology import white_tophat, black_tophat, disk, square, ball, closing, square
@@ -20,7 +15,6 @@ from skimage.filters import threshold_otsu, threshold_triangle, median, gaussian
 from skimage.measure import regionprops
 from skimage.color import label2rgb
 import pandas as pd
-#import tifffile
 import progressbar
 
 
@@ -49,11 +43,10 @@ def bbox2stageXY(image_stageX=0,  # image center stageX [micron]
 
     return bbox_center_stageX, bbox_center_stageY
 
+#########################################################################################
 
-#filename = r"D:\Testdata_Zeiss\OverViewScan.czi"
-filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Smart_Microscopy_Workshop\datasets\OverViewScan.czi"
-#filename = r"C:\Users\m1srh\Downloads\Halo_CZI.czi"
-#filename = r'/home/sebi06/Dropbox_Linux/Dropbox/aicspylibczi/OverViewScan.czi'
+
+filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Smart_Microscopy_Workshop\datasets\brain_slide\OverViewScan.czi"
 
 # get the metadata from the czi file
 md, additional_mdczi = imf.get_metadata(filename)
@@ -76,7 +69,7 @@ show_image = [0]
 sf = 1.0
 
 # threshold parameters - will be used depending on the segmentation method
-filtermethod = 'median'
+filtermethod = 'none'
 filtersize = 5
 threshold = 'triangle'
 
