@@ -1,7 +1,8 @@
 from aicspylibczi import CziFile
 from aicsimageio import AICSImage, imread, imread_dask
-import imgfile_tools as imf
-import czifile_tools as czt
+import tools.imgfile_tools as imf
+import tools.fileutils as czt
+import tools.napari_tools as nap
 import numpy as np
 import zarr
 import dask
@@ -11,48 +12,17 @@ from itertools import product
 import napari
 
 # filename = r"testdata\Tumor_H+E_small2.czi"
-# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\Well_B2-4_S=4_T=1_Z=1_C=1.czi"
-# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\W96_B2+B4_S=2_T=1=Z=1_C=1_Tile=5x9.czi"
-# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\W96_B2+B4_S=2_T=2=Z=4_C=3_Tile=5x9.czi"
 #filename = r"C:\Testdata_Zeiss\CD7\Z-Stack_DCV\CellDivision_T=10_Z=15_CH=2_DCV_small.czi"
+#filename = r"C:\Testdata_Zeiss\CD7\Z-Stack_DCV\CellDivision_T=15_Z=20_CH=2_DCV.czi"
 #filename = r"C:\Testdata_Zeiss\CD7\Mouse Kidney_40x0.95_3CD_JK_comp.czi"
-# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\S=1_3x3_T=1_Z=1_CH=2.czi"
-# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\S=2_3x3_T=1_Z=1_CH=2.czi"
-# filename = r"/datadisk1/tuxedo/testpictures/Testdata_Zeiss/CZI_Testfiles/S=2_3x3_T=1_Z=1_CH=2.czi"
-# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\S=2_3x3_T=1_Z=4_CH=2.czi"
-# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\S=2_3x3_T=3_Z=1_CH=2.czi"
-# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\S=1_3x3_T=3_Z=4_CH=2.czi"
-# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\S=2_3x3_T=3_Z=4_CH=2.czi"
 #filename = r"C:\Testdata_Zeiss\DTScan_ID4_small.czi"
 #filename = r"C:\Testdata_Zeiss\DTScan_ID4.czi"
 #filename = r"D:\Temp\input\DTScan_ID4-nokeeptiles.czi"
-#filename = r"D:\Testdata_Zeiss\unmix_bug436511\Raw_nokeeptiles.czi"
-#filename = r"D:\Testdata_Zeiss\unmix_bug436511\Raw_keeptiles.czi"
-#filename = r"D:\Testdata_Zeiss\unmix_bug436511\Raw_Uncompressed.czi"
-#filename = r"D:\Temp\input\OverViewScan_8Brains.czi"
-#filename = r"D:\Temp\input\OverViewScan_8Brains-keeptile.czi"
-#filename = r"D:\Temp\input\OverViewScan_8Brains-nokeeptile.czi"
 #filename = r"C:\Testdata_Zeiss\CD7\testwell96.czi"
-# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\Multiscene_CZI_3Scenes.czi"
-# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\S=2_3x3_T=3_CH=2.czi"
-# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\S=2_3x3_CH=2.czi"
 #filename = r"C:\Testdata_Zeiss\CZI_Testfiles\S=2_3x3_Z=4_CH=2.czi"
-# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\Z=4_CH=2.czi"
-# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\T=3_Z=4_CH=2.czi"
-# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\CZI_Testfiles\T=3_CH=2.czi"
-# filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\LatticeLightSheet\LS_Mitosis_T=150-300.czi"
-#filename = r"/datadisk1/tuxedo/testpictures/Testdata_Zeiss/BrainSlide/DTScan_ID4.czi"
-#filename = r"/datadisk1/tuxedo/testpictures/Testdata_Zeiss/CZI_Testfiles/96well_S=192_2pos_CH=3.czi"
-#filename = r"/datadisk1/tuxedo/testpictures/Testdata_Zeiss/CZI_Testfiles/W96_B2+B4_S=2_T=2=Z=4_C=3_Tile=5x9.czi"
-#filename = r"/datadisk1/tuxedo/testpictures/Testdata_Zeiss/Nuclei/nuclei_RGB/H+E/Tumor_H+E_small2.czi"
-#filename = r"/datadisk1/tuxedo/testpictures/Testdata_Zeiss/Nuclei/nuclei_RGB/H+E/Tumor_H+E.czi"
-#filename = r"/datadisk1/tuxedo/testpictures/Testdata_Zeiss/celldivision/CellDivision_T=10_Z=15_CH=2_DCV_small.czi"
-#filename = r"/datadisk1/tuxedo/testpictures/Testdata_Zeiss/CZI_Testfiles/S=2_3x3_T=3_Z=4_CH=2.czi"
+#filename = r"C:\Testdata_Zeiss\LatticeLightSheet\LS_Mitosis_T=150-300.czi"
 #filename = r"C:\Users\m1srh\Downloads\Halo_CZI_small.czi"
 filename = r"C:\Testdata_Zeiss\OverViewScan.czi"
-#filename = r"d:\Testdata_Zeiss\CZI_Testfiles\aicspylibczi\color_lines.czi"
-#filename = r"d:\Testdata_Zeiss\CZI_Testfiles\aicspylibczi\test2.czi"
-#filename = r"d:\Testdata_Zeiss\CZI_Testfiles\aicspylibczi\test4.czi"
 
 ######################################################################
 
@@ -76,14 +46,13 @@ elif md['ImageType'] == 'czi' and md['czi_isMosaic'] is True:
 # check if CZI has T or Z dimension
 hasT = False
 hasZ = False
+
 if 'T' in md['dims_aicspylibczi']:
     hasT = True
 if 'Z' in md['dims_aicspylibczi']:
     hasZ = True
 
-
 if use_aicsimageio:
-
     img = AICSImage(filename)
 
     if use_dask_delayed:
@@ -179,8 +148,9 @@ with napari.gui_qt():
 
     viewer = napari.Viewer()
 
-    layers = imf.show_napari(viewer, all_scenes_array, md,
+    layers = nap.show_napari(viewer, all_scenes_array, md,
                              blending='additive',
+                             adjust_contrast=True,
                              gamma=0.85,
                              add_mdtable=True,
                              rename_sliders=True)

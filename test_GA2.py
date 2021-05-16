@@ -108,10 +108,7 @@ czi = CziFile(filename)
 print('Dimensions   : ', czi.dims)
 print('Size         : ', czi.size)
 print('Shape        : ', czi.dims_shape())
-print('IsMoasic     : ', czi.is_mosaic())
-
-if czi.is_mosaic():
-    print('Mosaic Size  : ', czi.read_mosaic_size())
+print('IsMosaic     : ', czi.is_mosaic())
 
 # read the mosaic pixel data
 mosaic = czi.read_mosaic(C=0, scale_factor=1.0)
@@ -221,8 +218,8 @@ for s in progressbar.progressbar(range(md['SizeS']), redirect_stdout=True):
     if image_counter - 1 in show_image:
         print('Well:', props['WellId'].iloc[0], 'Index S-C:', s, chindex, 'Objects:', values['Number'])
 
-        # ax = vst.plot_segresults(image2d, mask, props,
-        #                         add_bbox=True)
+        ax = vst.plot_segresults(image2d, mask, props,
+                                 add_bbox=True)
 
 # make sure the array as 5D of order (T, Z, C, X, Y) to write an correct OME-TIFF
 mask = imf.expand_dims5d(mask, md)
