@@ -1237,12 +1237,14 @@ def addzeros(number):
     """
 
     if number < 10:
-        zerostring = '0000' + str(number)
+        zerostring = '00000' + str(number)
     if number >= 10 and number < 100:
-        zerostring = '000' + str(number)
+        zerostring = '0000' + str(number)
     if number >= 100 and number < 1000:
-        zerostring = '00' + str(number)
+        zerostring = '000' + str(number)
     if number >= 1000 and number < 10000:
+        zerostring = '00' + str(number)
+    if number >= 10000 and number < 100000:
         zerostring = '0' + str(number)
 
     return zerostring
