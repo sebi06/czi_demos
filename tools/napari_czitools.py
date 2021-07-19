@@ -43,10 +43,7 @@ from PyQt5.QtCore import Qt, QDir, QSortFilterProxyModel
 from PyQt5.QtCore import pyqtSlot
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QFont
-
-#import tools.czifile_tools as czt
 from czifiletools import czifile_tools as czt
-#import tools.imgfile_tools as imf
 import zarr
 import dask
 import dask.array as da
@@ -111,28 +108,12 @@ class TableWidget(QWidget):
 
 
 def show_napari(viewer, array, metadata,
-                use_dimstr = True,
-                dimstr = 'STZCYX',
                 blending='additive',
-                adjust_contrast=True,
+                adjust_contrast=False,
                 gamma=0.85,
                 add_mdtable=True,
+                md_dict={},
                 rename_sliders=False):
-    """Show the multidimensional array using the Napari viewer
-
-    :param viewer: Instance of the napari viewer
-    :type array: NapariViewer
-    :param array: multidimensional NumPy.Array containing the pixel data
-    :type array: NumPy.Array
-    :param metadata: dictionary with CZI or OME-TIFF metadata
-    :type metadata: dict
-    :param blending: NapariViewer option for blending, defaults to 'additive'
-    :type blending: str, optional
-    :param gamma: NapariViewer value for Gamma, defaults to 0.85
-    :type gamma: float, optional
-    :param rename_sliders: name slider with correct labels output, defaults to False
-    :type verbose: bool, optional
-    """
 
     # create list for the napari layers
     napari_layers = []
@@ -140,24 +121,15 @@ def show_napari(viewer, array, metadata,
     # create scalefcator with all ones
     scalefactors = [1.0] * len(array.shape)
 
-    # use the dimension string from AICSImageIO 6D
-    #dimpos = czt.get_dimpositions(metadata['Axes_aics'])
-    #dimpos = czt.get_dimpositions(metadata['czi_dims'])
-    if not use_dimstr:
-        dimpos = czt.get_dimpositions('S' + metadata['czi_dims5D_aics'])
-    if use_dimstr:
-        dimpos = czt.get_dimpositions(dimstr)
-
-
     # get the scalefactors from the metadata
-    scalef = czt.get_scalefactor(metadata)
+    scale_ratio = czt.get_scalefactor(metadata.scale.ratio)
 
     # modify the tuple for the scales for napari
-    scalefactors[dimpos['Z']] = scalef['zx']
+    scalefactors[metadata.dim_order['Z']] = scale_ratio['zx']
 
     # remove C dimension from scalefactor
     scalefactors_ch = scalefactors.copy()
-    del scalefactors_ch[dimpos['C']]
+    del scalefactors_ch[metadata.dim_order['C']]
 
     # add widget for metadata
     if add_mdtable:
@@ -170,22 +142,31 @@ def show_napari(viewer, array, metadata,
                                       area='right')
 
         # add the metadata and adapt the table display
-        mdbrowser.update_metadata(metadata)
+        mdbrowser.update_metadata(md_dict)
         mdbrowser.update_style()
 
     # add all channels as layers
-    for ch in range(metadata['SizeC']):
+    if metadata.dims.SizeC is None:
+        sizeC = 1
+    else:
+        sizeC = metadata.dims.SizeC
+
+    for ch in range(sizeC):
 
         try:
             # get the channel name
-            chname = metadata['Channels'][ch]
+            chname = metadata.channelinfo.names[ch]
+            #chname = metadata['Channels'][ch]
         except KeyError as e:
             print(e)
             # or use CH1 etc. as string for the name
             chname = 'CH' + str(ch + 1)
 
         # cut out channel
-        channel = slicedim(array, ch, dimpos['C'])
+        if metadata.dims.SizeC is not None:
+            channel = slicedim(array, ch, metadata.dim_order['C'])
+        if metadata.dims.SizeC is None:
+            channel = array
 
         # actually show the image array
         print('Adding Channel  :', chname)
@@ -206,9 +187,15 @@ def show_napari(viewer, array, metadata,
 
         if not adjust_contrast:
             # add channel to napari viewer
+
+            # guess an appropiate scaling from the embedded display seeting
+            lower = np.round(metadata.channelinfo.clims[ch][0] * metadata.maxrange, 0)
+            higher = np.round(metadata.channelinfo.clims[ch][1] * metadata.maxrange, 0)
+
             new_layer = viewer.add_image(channel,
                                          name=chname,
                                          scale=scalefactors_ch,
+                                         contrast_limits=[lower, higher],
                                          blending=blending,
                                          gamma=gamma)
 
@@ -216,17 +203,10 @@ def show_napari(viewer, array, metadata,
 
     if rename_sliders:
 
-        print('Renaming the Sliders based on the Dimension String ....')
+        print('Rename Sliders based on the Dimension String ....')
 
         # get the label of the sliders (as a tuple) ad rename it
-        #viewer.dims.axis_labels = napari_rename_sliders(viewer.dims.axis_labels, metadata['Axes_aics'])
-        #sliderlabels = napari_rename_sliders(viewer.dims.axis_labels, metadata['czi_dims'])
-        #sliderlabels = napari_rename_sliders(viewer.dims.axis_labels, metadata['czi_dims5D_aics'])
-        if not use_dimstr:
-            sliderlabels = napari_rename_sliders(viewer.dims.axis_labels, 'S' + metadata['czi_dims5D_aics'])
-        if use_dimstr:
-            sliderlabels = napari_rename_sliders(viewer.dims.axis_labels, dimstr)
-
+        sliderlabels = napari_rename_sliders(viewer.dims.axis_labels, metadata.aicsczi_dims)
 
         viewer.dims.axis_labels = sliderlabels
 
@@ -238,7 +218,7 @@ def napari_rename_sliders(sliders, dimorder):
 
     :param sliders: Tuple containing the slider label
     :type sliders: tuple
-    :param dimorder: Dimension string using AICSImageIO or aicspylibczi
+    :param dimorder: Dimension string using aicspylibczi
     :type dimorder: str
     :return: Tuple with new slider labels
     :rtype: tuple
