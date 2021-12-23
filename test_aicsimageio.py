@@ -1,24 +1,37 @@
-from aicsimageio import AICSImage, imread, imread_dask
-import czifile as zis
+import napari
+from czitools import czi_metadata as czimd
 
-filename = r"C:\Users\m1srh\OneDrive - Carl Zeiss AG\Testdata_Zeiss\Atomic\Nuclei\nuclei_RGB\H&E\Tumor_H&E_uncompressed_TSeries_3.czi"
+from aicsimageio import AICSImage
+from utils import misc, napari_tools
 
-# get CZI object
-czi = zis.CziFile(filename)
-# add axes and shape information using czifile package
-print(czi.axes)
-print(czi.shape)
+filename = r'd:\Testdata_Zeiss\CZI_Testfiles\testwell96.czi'
 
-# add axes and shape information using aicsimageio package
-czi_aics = AICSImage(filename)
-print(czi_aics.dims)
-print(czi_aics.shape)
-print(czi_aics.size_x)
-print(czi_aics.size_y)
-print(czi_aics.size_c)
-print(czi_aics.size_t)
-print(czi_aics.size_t)
-print(czi_aics.size_s)
+# get the complete metadata at once as one big class
+mdata = czimd.CziMetadata(filename)
 
-czi.close()
-czi_aics.close()
+# test using AICSImageIO
+aics_img = AICSImage(filename)
+print(aics_img.shape)
+for k,v in aics_img.dims.items():
+    print(k,v)
+
+# get the stack as dask array
+stack = misc.get_daskstack(aics_img)
+
+mdata.dimstring = "S" + aics_img.dims.order
+dim_order, dim_index, dim_valid = czimd.CziMetadata.get_dimorder(mdata.dimstring)
+setattr(mdata, "dim_order", dim_order)
+setattr(mdata, "dim_index", dim_index)
+setattr(mdata, "dim_valid", dim_valid)
+
+# start the napari viewer and show the image
+# show array inside napari viewer
+viewer = napari.Viewer()
+layers = napari_tools.show(viewer, stack, mdata,
+                           blending="additive",
+                           contrast="napari_auto",
+                           gamma=0.85,
+                           add_mdtable=True,
+                           name_sliders=True)
+
+napari.run()

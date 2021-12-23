@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 #################################################################
-# File        : test_czimetadata_class.py
-# Version     : 0.0.3
+# File        : test_pylicczirw_metadata_class.py
+# Version     : 0.0.1
 # Author      : sebi06
 # Date        : 11.08.2021
 #
@@ -12,14 +12,12 @@
 #################################################################
 
 from __future__ import annotations
-from czitools import czi_metadata as czimd
-from czitools import czi_read as czird
-import napari
-from aicspylibczi import CziFile
-from utils import misc, napari_tools
+from czitools import pylibczirw_metadata as czimd
+from utils import misc
 
 # adapt to your needs
 defaultdir = r"C:\Testdata_Zeiss\CZI_Testfiles"
+#defaultdir = r"d:\Temp\test_czi_write"
 
 # open s simple dialog to select a CZI file
 filename = misc.openfile(directory=defaultdir,
@@ -46,7 +44,6 @@ czi_objectives = czimd.CziObjectives(filename)
 czi_detectors = czimd.CziDetector(filename)
 czi_microscope = czimd.CziMicroscope(filename)
 czi_sample = czimd.CziSampleInfo(filename)
-czi_addmd = czimd.CziAddMetaData(filename)
 
 # get the complete metadata at once as one big class
 mdata = czimd.CziMetadata(filename)
@@ -62,33 +59,3 @@ print(df_md[:10])
 
 # write metadata as XML to disk
 xmlfile = misc.writexml_czi(filename)
-
-# get the planetable for the CZI file and save it (optional)
-pt, csvfile = czimd.get_planetable(filename,
-                                   norm_time=True,
-                                   savetable=True,
-                                   separator=",",
-                                   index=True)
-
-print(pt[:5])
-
-# get info from a specific scene
-aicsczi = CziFile(filename)
-scene = czimd.CziScene(aicsczi, 0)
-print("Scene XY-Width-Height :", scene.xstart, scene.ystart, scene.width, scene.height)
-print("Scene DimString :", scene.single_scene_dimstr)
-print("Scene Shape :", scene.shape_single_scene)
-
-# read pixel data
-all_scenes, _ = czird.read(filename)
-
-# show array inside napari viewer
-viewer = napari.Viewer()
-layers = napari_tools.show(viewer, all_scenes, mdata,
-                           blending="additive",
-                           contrast="napari_auto",
-                           gamma=0.85,
-                           add_mdtable=True,
-                           name_sliders=True)
-
-napari.run()

@@ -2,12 +2,9 @@
 
 #################################################################
 # File        : segmentation_tools.py
-# Version     : 0.4
-# Author      : czsrh
-# Date        : 10.12.2020
-# Institution : Carl Zeiss Microscopy GmbH
-#
-# Copyright (c) 2020 Carl Zeiss AG, Germany. All Rights Reserved.
+# Version     : 0.5
+# Author      : sebi06
+# Date        : 02.11.2021
 #################################################################
 
 

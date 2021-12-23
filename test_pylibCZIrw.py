@@ -1,6 +1,5 @@
-from czifiletools import pylibCZIrw_tools as cztrw
+from czitools import pylibczirw_metadata as czimd
 from pylibCZIrw import czi as pyczi
-#from pylibCZIrw import Rectangle
 from matplotlib import pyplot as plt
 
 
@@ -38,16 +37,18 @@ filename = r'd:\Testdata_Zeiss\CZI_Testfiles\testwell96.czi'
 #filename = r'/datadisk1/tuxedo/testpictures/Testdata_Zeiss/CZI_Testfiles/Multiscene_CZI_3Scenes.czi'
 #filename = r'c:\Users\m1srh\Downloads\Overview.czi'
 #filename = r'd:\Testdata_Zeiss\LatticeLightSheet\LS_Mitosis_T=150-300.czi'
+#filename = r"D:\Testdata_Zeiss\CZI_Testfiles\strange_no_SizeC.czi"
+#filename = r"D:\Testdata_Zeiss\CZI_Testfiles\ab0451_CH1_scale_libCZI_issue.czi"
 
-# get all the metadata as a dictionary
-md, md_add = cztrw.get_metadata_czi(filename, dim2none=True, convert_scunit=True)
+# get the complete metadata at once as one big class
+mdata = czimd.CziMetadata(filename)
 
 # open the CZI document to read the
 czidoc = pyczi.open_czi(filename)
 
 # show all dimensions
 total_bbox = czidoc.total_bounding_box
-for k,v in total_bbox.items():
+for k, v in total_bbox.items():
     print(k, v)
 
 # get information about the scenes etc.
@@ -59,15 +60,15 @@ print('Real Pixeltypes in CZI file : ', pixeltypes)
 
 # read a simple 2d image plane
 roi = (300, 300, 300, 600)
-image2d_C0 = czidoc.read(plane={'C': 0}, scene=0, roi=roi, pixel_type="Gray8")
-image2d_C1 = czidoc.read(plane={'C': 1}, scene=0, roi=roi, pixel_type="Gray8")
-print(image2d_C0.shape, image2d_C1.shape)
-print('Pixeltype after conversion during reading : ', image2d_C0.dtype, image2d_C1.dtype)
+image2d = czidoc.read(plane={'C': 0}, scene=0, zoom=1.0)
+#image2d = czidoc.read(plane={'C': 0}, scene=0, pixel_type="Gray8")
+#image2d = czidoc.read(plane={'C': 0}, scene=0, roi=roi, pixel_type="Gray8")
+print(image2d.shape)
+print('Pixeltype after conversion during reading : ', image2d.dtype)
 
 # Create two subplots and unpack the output array immediately
-f, (ax1, ax2) = plt.subplots(1, 2)
-ax1.imshow(image2d_C0, interpolation='nearest', cmap='Reds_r')
-ax2.imshow(image2d_C1, interpolation='nearest', cmap='Greens_r')
+f, ax1 = plt.subplots(1, 1)
+ax1.imshow(image2d, interpolation='nearest', cmap='Reds_r')
 plt.show()
 
 # store metadata inside Pandas dataframe
