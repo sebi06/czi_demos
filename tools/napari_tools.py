@@ -2,9 +2,9 @@
 
 #################################################################
 # File        : napari_tools.py
-# Version     : 0.0.8
+# Version     : 0.1.3
 # Author      : sebi06
-# Date        : 24.08.2021
+# Date        : 02.02.2022
 #
 # Disclaimer: This code is purely experimental. Feel free to
 # use it at your own risk.
@@ -40,12 +40,12 @@ from PyQt5.QtWidgets import (
 )
 
 from PyQt5.QtCore import Qt, QDir, QSortFilterProxyModel
-from PyQt5.QtCore import pyqtSlot
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QFont
-#import czi_metadata as czimd
-from czitools import pylibczirw_metadata as czimd
-import misc
+#from pylibCZIrw import czi as pyczi
+from czimetadata_tools import pylibczirw_metadata as czimd
+#from czitools import czi_metadata as czimd_aics
+from czimetadata_tools import misc
 import numpy as np
 from typing import List, Dict, Tuple, Optional, Type, Any, Union
 
@@ -107,6 +107,7 @@ class TableWidget(QWidget):
 
 
 def show(viewer: Any, array: np.ndarray, metadata: czimd.CziMetadata,
+         dim_order: dict,
          blending: str = "additive",
          contrast: str = "calc",
          gamma: float = 0.85,
@@ -119,6 +120,7 @@ def show(viewer: Any, array: np.ndarray, metadata: czimd.CziMetadata,
     :param viewer: Napari viewer object
     :param array: multi-dimensional array containing the pixel data
     :param metadata: CziMetadata class
+    :param dim_order: Dictionary with the dimension order.
     :param blending: blending mode for viewer
     :param contrast: method to be used to calculate an appropriate display scaling.
     - "calc" : real min & max calculation (might be slow) be calculated (slow)
@@ -142,11 +144,11 @@ def show(viewer: Any, array: np.ndarray, metadata: czimd.CziMetadata,
     scalefactors = [1.0] * len(array.shape)
 
     # modify the tuple for the scales for napari
-    scalefactors[metadata.dim_order["Z"]] = metadata.scale.ratio["zx"]
+    scalefactors[dim_order["Z"]] = metadata.scale.ratio["zx"]
 
     # remove C dimension from scalefactor
-    scalefactors_ch = scalefactors.copy()
-    del scalefactors_ch[metadata.dim_order["C"]]
+    #scalefactors_ch = scalefactors.copy()
+    #del scalefactors_ch[dim_order["C"]]
 
     # add Qt widget for metadata
     if add_mdtable:
@@ -158,14 +160,16 @@ def show(viewer: Any, array: np.ndarray, metadata: czimd.CziMetadata,
                                       area="right")
 
         # add the metadata and adapt the table
-        mdbrowser.update_metadata(czimd.create_mdict_complete(metadata))
+        mdbrowser.update_metadata(czimd.obj2dict(metadata, sort=True))
+
+        # mdbrowser.update_metadata(misc.sort_dict_by_key(metadata.metadict))
         mdbrowser.update_style()
 
     # add all channels as individual layers
-    if metadata.dims.SizeC is None:
+    if metadata.image.SizeC is None:
         sizeC = 1
     else:
-        sizeC = metadata.dims.SizeC
+        sizeC = metadata.image.SizeC
 
     # loop over all channels and add them as layers
     for ch in range(sizeC):
@@ -179,15 +183,15 @@ def show(viewer: Any, array: np.ndarray, metadata: czimd.CziMetadata,
             chname = "CH" + str(ch + 1)
 
         # cut out channel
-        if metadata.dims.SizeC is not None:
-            channel = misc.slicedim(array, ch, metadata.dim_order["C"])
-        if metadata.dims.SizeC is None:
+        if metadata.image.SizeC is not None:
+            channel = misc.slicedim(array, ch, dim_order["C"])
+        if metadata.image.SizeC is None:
             channel = array
 
         # actually show the image array
         print("Adding Channel  :", chname)
         print("Shape Channel   :", ch, channel.shape)
-        print("Scaling Factors :", scalefactors_ch)
+        print("Scaling Factors :", scalefactors)
 
         if contrast == "calc":
             # really calculate the min and max values - might be slow
@@ -197,7 +201,7 @@ def show(viewer: Any, array: np.ndarray, metadata: czimd.CziMetadata,
             # add channel to napari viewer
             new_layer = viewer.add_image(channel,
                                          name=chname,
-                                         scale=scalefactors_ch,
+                                         scale=scalefactors,
                                          contrast_limits=sc,
                                          blending=blending,
                                          gamma=gamma)
@@ -209,7 +213,7 @@ def show(viewer: Any, array: np.ndarray, metadata: czimd.CziMetadata,
             # add channel to napari viewer
             new_layer = viewer.add_image(channel,
                                          name=chname,
-                                         scale=scalefactors_ch,
+                                         scale=scalefactors,
                                          blending=blending,
                                          gamma=gamma)
         if contrast == "from_czi":
@@ -228,7 +232,7 @@ def show(viewer: Any, array: np.ndarray, metadata: czimd.CziMetadata,
             # add channel to Napari viewer
             new_layer = viewer.add_image(channel,
                                          name=chname,
-                                         scale=scalefactors_ch,
+                                         scale=scalefactors,
                                          contrast_limits=[lower, higher],
                                          blending=blending,
                                          gamma=gamma)
@@ -241,8 +245,13 @@ def show(viewer: Any, array: np.ndarray, metadata: czimd.CziMetadata,
         print("Rename Sliders based on the Dimension String ....")
 
         # get the label of the sliders (as a tuple) ad rename it
-        sliderlabels = rename_sliders(viewer.dims.axis_labels, metadata.dim_order)
+        sliderlabels = rename_sliders(viewer.dims.axis_labels, dim_order)
         viewer.dims.axis_labels = sliderlabels
+
+    # workaround because of: https://forum.image.sc/t/napari-3d-view-shows-flat-z-stack/62744/9?u=sebi06
+    od = list(viewer.dims.order)
+    od[dim_order["C"]], od[dim_order["Z"]] = od[dim_order["Z"]], od[dim_order["C"]]
+    viewer.dims.order = tuple(od)
 
     return napari_layers
 
@@ -257,7 +266,7 @@ def rename_sliders(sliders: Tuple, dim_order: Dict) -> Tuple:
     """
 
     # update the labels with the correct dimension strings
-    slidernames = ["B", "H", "V", "M", "S", "T", "Z", "Y", "X", "A"]
+    slidernames = ["S", "T", "Z"]
 
     # convert to list()
     tmp_sliders = list(sliders)
@@ -269,9 +278,10 @@ def rename_sliders(sliders: Tuple, dim_order: Dict) -> Tuple:
                 # assign the dimension labels
                 tmp_sliders[dim_order[s]] = s
 
-                # convert back to tuple
-                sliders = tuple(tmp_sliders)
         except KeyError:
             print("No", s, "Dimension found")
+
+    # convert back to tuple
+    sliders = tuple(tmp_sliders)
 
     return sliders
